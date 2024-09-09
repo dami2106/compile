@@ -94,7 +94,7 @@ for step in range(args.iterations):
 
 def get_cluster_model(model, example_count = 50):
 
-    kmeans = KMeans(n_clusters=args.num_segments, random_state=42, n_init='auto')
+    kmeans = KMeans(n_clusters=args.num_segments + 1, random_state=42, n_init='auto')
     all_latents = []
 
     for _ in range(example_count):
@@ -123,10 +123,21 @@ def get_cluster_model(model, example_count = 50):
 #Returns a list of clusters for each segment 
 def predict_clusters(cluster_model, new_latents):
     # np_latents = [tensor.detach().numpy([0]) for tensor in new_latents]
+
+    cluster_to_skill = {
+        0 : 'A',
+        1 : 'B',
+        2 : 'C',
+        3 : 'D',
+        4 : 'E',
+        5 : 'F',
+        6 : 'G',
+    }
+
     clusters = []
     for l in new_latents:
         cluster = cluster_model.predict([l])[0] + 1
-        clusters.append(cluster)
+        clusters.append(cluster_to_skill[cluster])
     return clusters
 
 print('\nAnalysis of a given input on the trained model:')
@@ -137,7 +148,7 @@ model.eval()  # Switch to evaluation mode
 k_mod = get_cluster_model(model, 50)
 
 
-for _ in range(3):
+for _ in range(10):
     # Select a specific input for analysis
     specific_input = utils.generate_toy_data(
         num_symbols=args.num_symbols,

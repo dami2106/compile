@@ -1,0 +1,143 @@
+Training model...
+step: 0, nll_train: 24.068100, rec_acc_eval: 0.208
+step: 1, nll_train: 22.433693, rec_acc_eval: 0.000
+step: 2, nll_train: 20.857773, rec_acc_eval: 0.062
+step: 3, nll_train: 19.271173, rec_acc_eval: 0.237
+step: 4, nll_train: 18.457630, rec_acc_eval: 0.303
+step: 5, nll_train: 17.816391, rec_acc_eval: 0.242
+step: 6, nll_train: 17.642693, rec_acc_eval: 0.225
+step: 7, nll_train: 17.094202, rec_acc_eval: 0.337
+step: 8, nll_train: 16.986254, rec_acc_eval: 0.291
+step: 9, nll_train: 16.732689, rec_acc_eval: 0.297
+step: 10, nll_train: 16.336212, rec_acc_eval: 0.304
+step: 11, nll_train: 15.879647, rec_acc_eval: 0.320
+step: 12, nll_train: 15.227720, rec_acc_eval: 0.340
+step: 13, nll_train: 15.000234, rec_acc_eval: 0.392
+step: 14, nll_train: 14.986037, rec_acc_eval: 0.403
+step: 15, nll_train: 14.852806, rec_acc_eval: 0.416
+step: 16, nll_train: 14.704062, rec_acc_eval: 0.407
+step: 17, nll_train: 14.565645, rec_acc_eval: 0.431
+step: 18, nll_train: 14.108392, rec_acc_eval: 0.512
+step: 19, nll_train: 13.427821, rec_acc_eval: 0.617
+step: 20, nll_train: 12.337198, rec_acc_eval: 0.667
+step: 21, nll_train: 11.752670, rec_acc_eval: 0.841
+step: 22, nll_train: 10.602988, rec_acc_eval: 0.902
+step: 23, nll_train: 9.116255, rec_acc_eval: 0.904
+step: 24, nll_train: 7.657206, rec_acc_eval: 0.883
+step: 25, nll_train: 6.405945, rec_acc_eval: 0.956
+step: 26, nll_train: 4.812378, rec_acc_eval: 0.899
+step: 27, nll_train: 5.736925, rec_acc_eval: 0.976
+step: 28, nll_train: 2.705656, rec_acc_eval: 0.957
+step: 29, nll_train: 2.493714, rec_acc_eval: 0.960
+step: 30, nll_train: 2.079378, rec_acc_eval: 0.974
+step: 31, nll_train: 2.285738, rec_acc_eval: 0.973
+step: 32, nll_train: 1.623706, rec_acc_eval: 0.989
+step: 33, nll_train: 1.231621, rec_acc_eval: 0.990
+step: 34, nll_train: 1.215767, rec_acc_eval: 0.988
+step: 35, nll_train: 1.138709, rec_acc_eval: 0.995
+step: 36, nll_train: 1.161787, rec_acc_eval: 0.995
+step: 37, nll_train: 1.387681, rec_acc_eval: 0.932
+step: 38, nll_train: 2.796429, rec_acc_eval: 0.955
+step: 39, nll_train: 2.339047, rec_acc_eval: 0.994
+step: 40, nll_train: 0.960055, rec_acc_eval: 0.984
+step: 41, nll_train: 0.875400, rec_acc_eval: 0.985
+step: 42, nll_train: 0.977363, rec_acc_eval: 0.984
+step: 43, nll_train: 1.493650, rec_acc_eval: 0.977
+step: 44, nll_train: 1.711339, rec_acc_eval: 0.974
+step: 45, nll_train: 1.194863, rec_acc_eval: 0.984
+step: 46, nll_train: 0.908383, rec_acc_eval: 0.987
+step: 47, nll_train: 0.645322, rec_acc_eval: 0.995
+step: 48, nll_train: 0.341657, rec_acc_eval: 0.998
+step: 49, nll_train: 0.318843, rec_acc_eval: 0.997
+step: 50, nll_train: 0.410458, rec_acc_eval: 0.980
+step: 51, nll_train: 1.180949, rec_acc_eval: 0.997
+step: 52, nll_train: 0.613762, rec_acc_eval: 0.994
+step: 53, nll_train: 0.672787, rec_acc_eval: 0.996
+step: 54, nll_train: 0.571983, rec_acc_eval: 0.998
+step: 55, nll_train: 0.416402, rec_acc_eval: 0.993
+step: 56, nll_train: 0.592421, rec_acc_eval: 0.996
+step: 57, nll_train: 0.335530, rec_acc_eval: 0.999
+step: 58, nll_train: 0.408237, rec_acc_eval: 0.999
+step: 59, nll_train: 0.348449, rec_acc_eval: 0.999
+step: 60, nll_train: 0.376843, rec_acc_eval: 0.998
+step: 61, nll_train: 0.315411, rec_acc_eval: 0.999
+step: 62, nll_train: 0.185938, rec_acc_eval: 1.000
+step: 63, nll_train: 0.187670, rec_acc_eval: 1.000
+step: 64, nll_train: 0.248329, rec_acc_eval: 1.000
+step: 65, nll_train: 0.220637, rec_acc_eval: 1.000
+step: 66, nll_train: 0.198668, rec_acc_eval: 1.000
+step: 67, nll_train: 0.217678, rec_acc_eval: 1.000
+step: 68, nll_train: 0.261337, rec_acc_eval: 1.000
+step: 69, nll_train: 0.221632, rec_acc_eval: 1.000
+step: 70, nll_train: 0.238452, rec_acc_eval: 1.000
+step: 71, nll_train: 0.144925, rec_acc_eval: 1.000
+step: 72, nll_train: 0.208784, rec_acc_eval: 1.000
+step: 73, nll_train: 0.217654, rec_acc_eval: 1.000
+step: 74, nll_train: 0.151027, rec_acc_eval: 1.000
+step: 75, nll_train: 0.217022, rec_acc_eval: 1.000
+step: 76, nll_train: 0.154734, rec_acc_eval: 1.000
+step: 77, nll_train: 0.255449, rec_acc_eval: 1.000
+step: 78, nll_train: 0.235507, rec_acc_eval: 1.000
+step: 79, nll_train: 0.154195, rec_acc_eval: 1.000
+step: 80, nll_train: 0.183622, rec_acc_eval: 1.000
+step: 81, nll_train: 0.176983, rec_acc_eval: 1.000
+step: 82, nll_train: 0.181673, rec_acc_eval: 1.000
+step: 83, nll_train: 0.171287, rec_acc_eval: 1.000
+step: 84, nll_train: 0.198077, rec_acc_eval: 1.000
+step: 85, nll_train: 0.184765, rec_acc_eval: 1.000
+step: 86, nll_train: 0.191708, rec_acc_eval: 1.000
+step: 87, nll_train: 0.161714, rec_acc_eval: 1.000
+step: 88, nll_train: 0.166007, rec_acc_eval: 1.000
+step: 89, nll_train: 0.197791, rec_acc_eval: 1.000
+step: 90, nll_train: 0.212609, rec_acc_eval: 1.000
+step: 91, nll_train: 0.188634, rec_acc_eval: 1.000
+step: 92, nll_train: 0.188255, rec_acc_eval: 1.000
+step: 93, nll_train: 0.160598, rec_acc_eval: 1.000
+step: 94, nll_train: 0.141865, rec_acc_eval: 1.000
+step: 95, nll_train: 0.169132, rec_acc_eval: 1.000
+step: 96, nll_train: 0.201688, rec_acc_eval: 1.000
+step: 97, nll_train: 0.247827, rec_acc_eval: 1.000
+step: 98, nll_train: 0.181330, rec_acc_eval: 1.000
+step: 99, nll_train: 0.124513, rec_acc_eval: 1.000
+
+Analysis of a given input on the trained model:
+[4 4 4 1 1 5 5 3 3 0]
+[array([4, 4, 4]), array([1, 1]), array([5, 5]), array([3, 3])]
+['C', 'B', 'D', 'E']
+
+[3 3 5 5 5 5 4 4 4 1 1 1 0]
+[array([3, 3]), array([5, 5, 5, 5]), array([4, 4, 4]), array([1, 1, 1])]
+['E', 'D', 'C', 'B']
+
+[1 1 1 1 4 3 2 2 2 2 0]
+[array([1, 1, 1, 1]), array([4]), array([3]), array([2, 2, 2, 2])]
+['B', 'C', 'E', 'F']
+
+[2 1 1 1 4 4 4 4 5 5 0]
+[array([2]), array([1, 1, 1]), array([4, 4, 4, 4]), array([5, 5])]
+['F', 'B', 'C', 'D']
+
+[1 1 1 1 3 3 3 3 4 4 4 4 5 5 5 5 0]
+[array([1, 1, 1, 1]), array([3, 3, 3, 3]), array([4, 4, 4, 4]), array([5, 5, 5, 5])]
+['B', 'E', 'C', 'D']
+
+[5 5 4 4 4 3 2 2 2 2 0]
+[array([5, 5]), array([4, 4, 4]), array([3]), array([2, 2, 2, 2])]
+['D', 'C', 'E', 'F']
+
+[2 2 2 2 3 3 3 4 4 5 5 0]
+[array([2, 2, 2, 2]), array([3, 3, 3]), array([4, 4]), array([5, 5])]
+['F', 'E', 'C', 'D']
+
+[5 3 2 2 2 2 4 4 4 0]
+[array([5]), array([3]), array([2, 2, 2, 2]), array([4, 4, 4])]
+['D', 'E', 'F', 'C']
+
+[1 1 3 3 4 4 4 4 2 2 2 2 0]
+[array([1, 1]), array([3, 3]), array([4, 4, 4, 4]), array([2, 2, 2, 2])]
+['B', 'E', 'C', 'F']
+
+[5 1 1 1 1 2 2 4 4 4 4 0]
+[array([5]), array([1, 1, 1, 1]), array([2, 2]), array([4, 4, 4, 4])]
+['D', 'B', 'F', 'C']
+

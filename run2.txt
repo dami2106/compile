@@ -1,0 +1,143 @@
+Training model...
+step: 0, nll_train: 24.182486, rec_acc_eval: 0.231
+step: 1, nll_train: 21.560223, rec_acc_eval: 0.206
+step: 2, nll_train: 20.990883, rec_acc_eval: 0.210
+step: 3, nll_train: 19.625347, rec_acc_eval: 0.209
+step: 4, nll_train: 18.730238, rec_acc_eval: 0.201
+step: 5, nll_train: 17.769482, rec_acc_eval: 0.237
+step: 6, nll_train: 17.422409, rec_acc_eval: 0.236
+step: 7, nll_train: 17.441523, rec_acc_eval: 0.206
+step: 8, nll_train: 16.888124, rec_acc_eval: 0.286
+step: 9, nll_train: 16.915714, rec_acc_eval: 0.395
+step: 10, nll_train: 16.726780, rec_acc_eval: 0.400
+step: 11, nll_train: 16.151169, rec_acc_eval: 0.413
+step: 12, nll_train: 16.469011, rec_acc_eval: 0.373
+step: 13, nll_train: 15.841700, rec_acc_eval: 0.375
+step: 14, nll_train: 15.526291, rec_acc_eval: 0.391
+step: 15, nll_train: 15.523929, rec_acc_eval: 0.436
+step: 16, nll_train: 14.912766, rec_acc_eval: 0.468
+step: 17, nll_train: 14.419853, rec_acc_eval: 0.468
+step: 18, nll_train: 14.065282, rec_acc_eval: 0.541
+step: 19, nll_train: 13.569810, rec_acc_eval: 0.532
+step: 20, nll_train: 12.557465, rec_acc_eval: 0.563
+step: 21, nll_train: 11.881512, rec_acc_eval: 0.682
+step: 22, nll_train: 10.888681, rec_acc_eval: 0.745
+step: 23, nll_train: 9.833101, rec_acc_eval: 0.848
+step: 24, nll_train: 8.600513, rec_acc_eval: 0.876
+step: 25, nll_train: 6.935327, rec_acc_eval: 0.909
+step: 26, nll_train: 6.231339, rec_acc_eval: 0.884
+step: 27, nll_train: 6.040671, rec_acc_eval: 0.893
+step: 28, nll_train: 5.114090, rec_acc_eval: 0.915
+step: 29, nll_train: 4.285326, rec_acc_eval: 0.959
+step: 30, nll_train: 3.089904, rec_acc_eval: 0.978
+step: 31, nll_train: 2.101115, rec_acc_eval: 0.988
+step: 32, nll_train: 1.421588, rec_acc_eval: 0.986
+step: 33, nll_train: 1.347512, rec_acc_eval: 0.994
+step: 34, nll_train: 1.284396, rec_acc_eval: 0.980
+step: 35, nll_train: 1.688872, rec_acc_eval: 0.983
+step: 36, nll_train: 1.529584, rec_acc_eval: 0.996
+step: 37, nll_train: 0.901958, rec_acc_eval: 0.988
+step: 38, nll_train: 1.181509, rec_acc_eval: 0.996
+step: 39, nll_train: 1.233059, rec_acc_eval: 0.992
+step: 40, nll_train: 0.610262, rec_acc_eval: 0.992
+step: 41, nll_train: 0.876015, rec_acc_eval: 0.986
+step: 42, nll_train: 0.982423, rec_acc_eval: 0.986
+step: 43, nll_train: 0.988101, rec_acc_eval: 0.985
+step: 44, nll_train: 1.045671, rec_acc_eval: 0.987
+step: 45, nll_train: 1.014112, rec_acc_eval: 0.988
+step: 46, nll_train: 0.846284, rec_acc_eval: 0.982
+step: 47, nll_train: 1.187464, rec_acc_eval: 0.975
+step: 48, nll_train: 1.685033, rec_acc_eval: 0.960
+step: 49, nll_train: 1.969102, rec_acc_eval: 0.955
+step: 50, nll_train: 1.760790, rec_acc_eval: 0.966
+step: 51, nll_train: 1.577983, rec_acc_eval: 0.969
+step: 52, nll_train: 1.739975, rec_acc_eval: 0.960
+step: 53, nll_train: 1.268783, rec_acc_eval: 0.966
+step: 54, nll_train: 1.370353, rec_acc_eval: 0.970
+step: 55, nll_train: 1.271765, rec_acc_eval: 0.974
+step: 56, nll_train: 1.138572, rec_acc_eval: 0.974
+step: 57, nll_train: 0.906932, rec_acc_eval: 0.985
+step: 58, nll_train: 0.938836, rec_acc_eval: 0.984
+step: 59, nll_train: 0.646610, rec_acc_eval: 0.990
+step: 60, nll_train: 0.601544, rec_acc_eval: 0.995
+step: 61, nll_train: 0.501505, rec_acc_eval: 0.998
+step: 62, nll_train: 0.404254, rec_acc_eval: 0.965
+step: 63, nll_train: 1.286270, rec_acc_eval: 0.947
+step: 64, nll_train: 2.025251, rec_acc_eval: 0.952
+step: 65, nll_train: 2.586856, rec_acc_eval: 0.944
+step: 66, nll_train: 1.970493, rec_acc_eval: 0.941
+step: 67, nll_train: 2.010951, rec_acc_eval: 0.940
+step: 68, nll_train: 1.959860, rec_acc_eval: 0.941
+step: 69, nll_train: 1.516224, rec_acc_eval: 0.960
+step: 70, nll_train: 1.419826, rec_acc_eval: 0.950
+step: 71, nll_train: 1.474069, rec_acc_eval: 0.960
+step: 72, nll_train: 1.129056, rec_acc_eval: 0.967
+step: 73, nll_train: 0.957058, rec_acc_eval: 0.970
+step: 74, nll_train: 0.971918, rec_acc_eval: 0.958
+step: 75, nll_train: 0.837682, rec_acc_eval: 0.978
+step: 76, nll_train: 0.766570, rec_acc_eval: 0.929
+step: 77, nll_train: 3.040652, rec_acc_eval: 0.994
+step: 78, nll_train: 0.585085, rec_acc_eval: 0.995
+step: 79, nll_train: 0.455190, rec_acc_eval: 0.996
+step: 80, nll_train: 0.424793, rec_acc_eval: 0.994
+step: 81, nll_train: 0.639413, rec_acc_eval: 0.993
+step: 82, nll_train: 0.442479, rec_acc_eval: 0.996
+step: 83, nll_train: 0.498538, rec_acc_eval: 0.994
+step: 84, nll_train: 0.458321, rec_acc_eval: 0.997
+step: 85, nll_train: 0.515000, rec_acc_eval: 0.998
+step: 86, nll_train: 0.310193, rec_acc_eval: 0.999
+step: 87, nll_train: 0.308589, rec_acc_eval: 0.999
+step: 88, nll_train: 0.290287, rec_acc_eval: 1.000
+step: 89, nll_train: 0.332158, rec_acc_eval: 1.000
+step: 90, nll_train: 0.312915, rec_acc_eval: 1.000
+step: 91, nll_train: 0.229921, rec_acc_eval: 1.000
+step: 92, nll_train: 0.212115, rec_acc_eval: 1.000
+step: 93, nll_train: 0.139418, rec_acc_eval: 1.000
+step: 94, nll_train: 0.173538, rec_acc_eval: 1.000
+step: 95, nll_train: 0.176335, rec_acc_eval: 1.000
+step: 96, nll_train: 0.188343, rec_acc_eval: 1.000
+step: 97, nll_train: 0.288896, rec_acc_eval: 1.000
+step: 98, nll_train: 0.239630, rec_acc_eval: 1.000
+step: 99, nll_train: 0.182804, rec_acc_eval: 1.000
+
+Analysis of a given input on the trained model:
+[3 3 3 2 2 4 4 4 4 5 0]
+[array([3, 3, 3]), array([2, 2]), array([4, 4, 4, 4]), array([5])]
+[4, 3, 5, 1]
+
+[5 3 2 2 2 2 4 4 0]
+[array([5]), array([3]), array([2, 2, 2, 2]), array([4, 4])]
+[1, 4, 3, 5]
+
+[2 3 1 1 1 4 0]
+[array([2]), array([3]), array([1, 1, 1]), array([4])]
+[3, 4, 2, 5]
+
+[3 4 4 4 1 1 2 0]
+[array([3]), array([4, 4, 4]), array([1, 1]), array([2])]
+[4, 5, 2, 3]
+
+[3 3 3 1 1 1 1 4 5 5 5 0]
+[array([3, 3, 3]), array([1, 1, 1, 1]), array([4]), array([5, 5, 5])]
+[4, 2, 5, 1]
+
+[3 3 5 1 1 1 1 4 0]
+[array([3, 3]), array([5]), array([1, 1, 1, 1]), array([4])]
+[4, 1, 2, 5]
+
+[5 5 2 2 2 2 3 3 3 3 4 4 4 0]
+[array([5, 5]), array([2, 2, 2, 2]), array([3, 3, 3, 3]), array([4, 4, 4])]
+[1, 3, 4, 5]
+
+[2 5 5 1 4 4 4 0]
+[array([2]), array([5, 5]), array([1]), array([4, 4, 4])]
+[3, 1, 2, 5]
+
+[5 5 2 2 2 4 4 4 4 1 1 1 1 0]
+[array([5, 5]), array([2, 2, 2]), array([4, 4, 4, 4]), array([1, 1, 1, 1])]
+[1, 3, 5, 2]
+
+[1 1 1 1 2 2 4 5 5 0]
+[array([1, 1, 1, 1]), array([2, 2]), array([4]), array([5, 5])]
+[2, 3, 5, 1]
+
