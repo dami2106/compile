@@ -118,7 +118,8 @@ def get_cluster_model(model, example_count = 50):
 
     return kmeans
 
-
+#A function to predict a latent for an input sequence into a set of clusters
+#Returns a list of clusters for each segment 
 def predict_clusters(cluster_model, new_latents):
     np_latents = [tensor.detach().numpy([0]) for tensor in new_latents]
     clusters = []
@@ -129,13 +130,6 @@ def predict_clusters(cluster_model, new_latents):
 
 print('\nAnalysis of a given input on the trained model:')
 model.eval()  # Switch to evaluation mode
-
-
-
-
-
-
-
 
 
 
