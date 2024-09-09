@@ -94,7 +94,7 @@ for step in range(args.iterations):
 
 def get_cluster_model(model, example_count = 50):
 
-    kmeans = KMeans(n_clusters=args.num_segments, random_state=42)
+    kmeans = KMeans(n_clusters=args.num_segments, random_state=42, n_init='auto')
     all_latents = []
 
     for _ in range(example_count):
@@ -109,11 +109,12 @@ def get_cluster_model(model, example_count = 50):
         _, _, _, _, all_z = model.forward(specific_input, lengths)
 
         # print(specific_input)
-        latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
-        all_latents.append(latents)
+        for t in all_z['samples']:
+            tens = t.detach().numpy()[0].tolist()
+            all_latents.append(tens)
 
     all_latents = np.array(all_latents)
-
+    
     kmeans.fit(all_latents)
 
     return kmeans
@@ -121,10 +122,10 @@ def get_cluster_model(model, example_count = 50):
 #A function to predict a latent for an input sequence into a set of clusters
 #Returns a list of clusters for each segment 
 def predict_clusters(cluster_model, new_latents):
-    np_latents = [tensor.detach().numpy([0]) for tensor in new_latents]
+    # np_latents = [tensor.detach().numpy([0]) for tensor in new_latents]
     clusters = []
-    for l in np_latents:
-        cluster = model.predict([l])[0] + 1
+    for l in new_latents:
+        cluster = cluster_model.predict([l])[0] + 1
         clusters.append(cluster)
     return clusters
 
@@ -133,32 +134,36 @@ model.eval()  # Switch to evaluation mode
 
 
 
+k_mod = get_cluster_model(model, 50)
 
 
+for _ in range(3):
+    # Select a specific input for analysis
+    specific_input = utils.generate_toy_data(
+        num_symbols=args.num_symbols,
+        num_segments=args.num_segments)
+    lengths = torch.tensor([len(specific_input)])
+    specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
 
-# Select a specific input for analysis
-specific_input = utils.generate_toy_data(
-    num_symbols=args.num_symbols,
-    num_segments=args.num_segments)
-lengths = torch.tensor([len(specific_input)])
-specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
+    # Run the model on the specific input
+    _, _, _, all_b, all_z = model.forward(specific_input, lengths)
 
-# Run the model on the specific input
-all_encs, all_recs, all_masks, all_b, all_z = model.forward(specific_input, lengths)
+    # print(specific_input)
+    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+    boundary_positions = [0] + boundary_positions 
 
-# print(specific_input)
-latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
-boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
-boundary_positions = [0] + boundary_positions 
+    input_array = specific_input.cpu().detach().numpy()[0]
 
-input_array = specific_input.cpu().detach().numpy()[0]
+    segments = []
+    segment_indices = []
+    for i in range(len(boundary_positions) - 1):
+        start_idx = int(boundary_positions[i])
+        end_idx = int(boundary_positions[i + 1])
+        segments.append(input_array[start_idx:end_idx])
+        segment_indices.append((start_idx, end_idx))
 
-segments = []
-segment_indices = []
-for i in range(len(boundary_positions) - 1):
-    start_idx = int(boundary_positions[i])
-    end_idx = int(boundary_positions[i + 1])
-    segments.append(input_array[start_idx:end_idx])
-    segment_indices.append((start_idx, end_idx))
-
-
+    print(input_array)
+    print(segments)
+    print(predict_clusters(k_mod, latents))
+    print()
