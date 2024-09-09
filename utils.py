@@ -79,6 +79,7 @@ def generate_toy_data(num_symbols=5, num_segments=3, max_segment_len=5):
     for seg_id in range(num_segments):
         segment_len = np.random.choice(np.arange(1, max_segment_len))
         seq += [symbols[seg_id]] * segment_len
+    
     seq += [0]
     return torch.tensor(seq, dtype=torch.int64)
 
@@ -177,3 +178,5 @@ def get_reconstruction_accuracy(inputs, outputs, args):
         rec_acc += matches.float().mean()
     rec_acc /= batch_size
     return rec_acc, rec_seq
+
+

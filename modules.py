@@ -29,7 +29,7 @@ class CompILE(nn.Module):
         self.temp_b = temp_b
         self.temp_z = temp_z
         self.latent_dist = latent_dist
-
+        
         self.embed = nn.Embedding(input_dim, hidden_dim)
         self.lstm_cell = nn.LSTMCell(hidden_dim, hidden_dim)
 
@@ -67,6 +67,7 @@ class CompILE(nn.Module):
         if segment_id == self.max_num_segments - 1:
             # Last boundary is always placed on last sequence element.
             logits_b = None
+            lengths = lengths.to(encodings.device)  # Ensure lengths is on the same device
             sample_b = torch.zeros_like(encodings[:, :, 0]).scatter_(
                 1, lengths.unsqueeze(1) - 1, 1)
         else:
@@ -75,7 +76,7 @@ class CompILE(nn.Module):
             # Mask out first position with large neg. value.
             neg_inf = torch.ones(
                 encodings.size(0), 1, device=encodings.device) * utils.NEG_INF
-            # TODO(tkipf): Mask out padded positions with large neg. value.
+            # TODO: Mask out padded positions with large neg. value.
             logits_b = torch.cat([neg_inf, logits_b[:, 1:]], dim=1)
             if self.training:
                 sample_b = utils.gumbel_softmax_sample(
