@@ -1,0 +1,18 @@
+{
+    "iterations": 150,
+    "learning_rate": 0.01,
+    "hidden_dim": 32,
+    "latent_dim": 6,
+    "latent_dist": "concrete",
+    "batch_size": 128,
+    "num_segments": 3,
+    "no_cuda": false,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/",
+    "max_steps": 11,
+    "atari_env_name": "alien",
+    "save_dir": "runs/test_run",
+    "random_seed": 0,
+    "results_file": "runs/test_run/results",
+    "cuda": false
+}
