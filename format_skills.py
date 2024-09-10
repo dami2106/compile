@@ -1,13 +1,12 @@
 import torch
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
-def create_cluster_model(states, actions, model, args, device='cpu'):
-    kmeans = KMeans(n_clusters=args.num_segments , random_state=args.random_seed, n_init='auto')
+def get_latents(states, actions, model, args, device = 'cpu'):
     all_latents = []
 
     for i in range(len(states)):
-
         # Choose a single test input
         single_test_input = states[i:i + 1]  # Select the first trajectory for testing
         single_test_action = actions[i: i +1]  # Corresponding action sequence
@@ -25,10 +24,20 @@ def create_cluster_model(states, actions, model, args, device='cpu'):
             all_latents.append(t.detach().numpy()[0].tolist())
 
     all_latents = np.array(all_latents)
+    return all_latents
 
-    kmeans.fit(all_latents)
+def create_cluster_model_KM(latents, args):
+    kmeans = KMeans(n_clusters=args.num_segments , random_state=args.random_seed, n_init='auto')
+
+    kmeans.fit(latents)
 
     return kmeans
+
+def create_GMM_model(latents, args):
+    gmm = GaussianMixture(n_components=args.num_segments)  # Specify the number of clusters
+    gmm.fit(latents)
+    return gmm
+
 
 def predict_clusters(cluster_model, new_latents):
 

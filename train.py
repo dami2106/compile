@@ -10,19 +10,21 @@ import utils
 import modules
 from torch.utils.tensorboard import SummaryWriter
 
-from format_skills import compare_skills_truth, determine_objectives
+from format_skills import compare_skills_truth,\
+    determine_objectives, predict_clusters, create_cluster_model_KM,\
+    get_latents, create_GMM_model
 
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=100,
+parser.add_argument('--iterations', type=int, default=150,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=256,
+parser.add_argument('--hidden-dim', type=int, default=64,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=64,
+parser.add_argument('--latent-dim', type=int, default=32,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
@@ -39,11 +41,11 @@ parser.add_argument('--log-interval', type=int, default=1,
 
 parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
-parser.add_argument('--max-steps', type=int, default=11,
+parser.add_argument('--max-steps', type=int, default=10,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='',
+parser.add_argument('--save-dir', type=str, default='runs/test_run_x',
                     help='directory where model and config are saved')
-parser.add_argument('--random-seed', type=int, default=42,
+parser.add_argument('--random-seed', type=int, default=45,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
@@ -88,10 +90,8 @@ optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 # model.load('checkpoint.pth')
 
-data_states = np.load(data_path + 'states.npy', allow_pickle=True).astype('float32')
+data_states = np.load(data_path + 'states.npy', allow_pickle=True)
 data_actions = np.load(data_path + 'actions.npy', allow_pickle=True)
-data_actions = np.argmax(data_actions, axis=-1)
-data_actions = np.hstack((data_actions, np.zeros((data_actions.shape[0], 1)))).astype('long')
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
@@ -148,8 +148,8 @@ while step < args.iterations:
          # Log to TensorBoard
         writer.add_scalar('Loss/nll_train', batch_loss, step)
         writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
-        print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
-        print('reconstruction: {}'.format(rec[-1]))
+        #print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
+        #print('reconstruction: {}'.format(rec[-1]))
     
     step += 1
 
@@ -158,7 +158,11 @@ writer.close()
 
 model.eval()
 
-# kmeans = create_cluster_model(train_data_states, train_action_states, model)
+
+train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+
+kmeans = create_cluster_model_KM(train_latents, args)
+gmm = create_GMM_model(train_latents, args)
 
 for i in range(len(test_data_states)):
 
@@ -190,16 +194,12 @@ for i in range(len(test_data_states)):
         segments.append(input_array[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
-    # clusters = predict_clusters(kmeans, latents)
+    clusters_km = predict_clusters(kmeans, latents)
+    clusters_gmm = predict_clusters(gmm, latents)
 
-    # compare_skills_truth(input_array, segments, clusters)
-    print(determine_objectives(input_array))
-    print(boundary_positions)
-    for s in segments:
-        print(s)
-        print()
-    
-
+    compare_skills_truth(input_array, segments, clusters_km)
+    compare_skills_truth(input_array, segments, clusters_gmm)
+ 
     
     print('\n----------------------------\n')
 
