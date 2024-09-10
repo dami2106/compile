@@ -148,33 +148,36 @@ model.eval()  # Switch to evaluation mode
 k_mod = get_cluster_model(model, 50)
 
 
-for _ in range(10):
-    # Select a specific input for analysis
-    specific_input = utils.generate_toy_data(
-        num_symbols=args.num_symbols,
-        num_segments=args.num_segments)
-    lengths = torch.tensor([len(specific_input)])
-    specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
+# # Select a specific input for analysis
+# specific_input = utils.generate_toy_data(
+#     num_symbols=args.num_symbols,
+#     num_segments=args.num_segments)
+# lengths = torch.tensor([len(specific_input)])
+# specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
 
-    # Run the model on the specific input
-    _, _, _, all_b, all_z = model.forward(specific_input, lengths)
+test_input = [1, 1, 1, 2, 2, 1, 1, 2, 2, 0]
+specific_input = torch.tensor(test_input).unsqueeze(0).to(device)  # Add batch dimension
+lengths = torch.tensor([len(test_input)]).to(device) 
 
-    # print(specific_input)
-    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
-    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
-    boundary_positions = [0] + boundary_positions 
+# Run the model on the specific input
+_, _, _, all_b, all_z = model.forward(specific_input, lengths)
 
-    input_array = specific_input.cpu().detach().numpy()[0]
+# print(specific_input)
+latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+boundary_positions = [0] + boundary_positions 
 
-    segments = []
-    segment_indices = []
-    for i in range(len(boundary_positions) - 1):
-        start_idx = int(boundary_positions[i])
-        end_idx = int(boundary_positions[i + 1])
-        segments.append(input_array[start_idx:end_idx])
-        segment_indices.append((start_idx, end_idx))
+input_array = specific_input.cpu().detach().numpy()[0]
 
-    print(input_array)
-    print(segments)
-    print(predict_clusters(k_mod, latents))
-    print()
+segments = []
+segment_indices = []
+for i in range(len(boundary_positions) - 1):
+    start_idx = int(boundary_positions[i])
+    end_idx = int(boundary_positions[i + 1])
+    segments.append(input_array[start_idx:end_idx])
+    segment_indices.append((start_idx, end_idx))
+
+print(input_array)
+print(segments)
+print(predict_clusters(k_mod, latents))
+print()
