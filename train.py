@@ -5,7 +5,7 @@ import utils
 import modules
 import torch
 import torch.nn.functional as F
-from sklearn.cluster import KMeans
+
 
 import numpy as np
 
@@ -23,7 +23,7 @@ parser.add_argument('--latent-dist', type=str, default='gaussian',
 parser.add_argument('--batch-size', type=int, default=512,
                     help='Mini-batch size (for averaging gradients).')
 
-parser.add_argument('--num-symbols', type=int, default=5,
+parser.add_argument('--num-symbols', type=int, default=4,
                     help='Number of distinct symbols in data generation.')
 parser.add_argument('--num-segments', type=int, default=4,
                     help='Number of segments in data generation.')
@@ -92,92 +92,65 @@ for step in range(args.iterations):
         # print('reconstruction: {}'.format(rec[-1]))
 
 
-def get_cluster_model(model, example_count = 50):
-
-    kmeans = KMeans(n_clusters=args.num_segments + 1, random_state=42, n_init='auto')
-    all_latents = []
-
-    for _ in range(example_count):
-        specific_input = utils.generate_toy_data(
-            num_symbols=args.num_symbols,
-            num_segments=args.num_segments)
-        lengths = torch.tensor([len(specific_input)])
-
-        specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
-
-        # Run the model on the specific input
-        _, _, _, _, all_z = model.forward(specific_input, lengths)
-
-        # print(specific_input)
-        for t in all_z['samples']:
-            tens = t.detach().numpy()[0].tolist()
-            all_latents.append(tens)
-
-    all_latents = np.array(all_latents)
-    
-    kmeans.fit(all_latents)
-
-    return kmeans
-
-#A function to predict a latent for an input sequence into a set of clusters
-#Returns a list of clusters for each segment 
-def predict_clusters(cluster_model, new_latents):
-    # np_latents = [tensor.detach().numpy([0]) for tensor in new_latents]
-
-    cluster_to_skill = {
-        0 : 'A',
-        1 : 'B',
-        2 : 'C',
-        3 : 'D',
-        4 : 'E',
-        5 : 'F',
-        6 : 'G',
-    }
-
-    clusters = []
-    for l in new_latents:
-        cluster = cluster_model.predict([l])[0] + 1
-        clusters.append(cluster_to_skill[cluster])
-    return clusters
 
 print('\nAnalysis of a given input on the trained model:')
 model.eval()  # Switch to evaluation mode
 
 
 
-k_mod = get_cluster_model(model, 50)
+train_latents = utils.get_all_latents(model, args, 100, device)
+km_mod = utils.get_km_model(train_latents, args)
+gmm_mod = utils.get_gmm_model(train_latents, args)
+
+skills_count = {}
+
+for _ in range(10):
+    # Select a specific input for analysis
+    specific_input = utils.generate_toy_data(
+        num_symbols=args.num_symbols,
+        num_segments=args.num_segments)
+    lengths = torch.tensor([len(specific_input)])
+    specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
+
+    # test_input = [1, 1, 1, 2, 2, 1, 1, 2, 2, 0]
+    # specific_input = torch.tensor(test_input).unsqueeze(0).to(device)  # Add batch dimension
+    # lengths = torch.tensor([len(test_input)]).to(device) 
+
+    # Run the model on the specific input
+    _, _, _, all_b, all_z = model.forward(specific_input, lengths)
+
+    # print(specific_input)
+    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+    boundary_positions = [0] + boundary_positions 
+
+    input_array = specific_input.cpu().detach().numpy()[0]
+
+    segments = []
+    segment_indices = []
+    for i in range(len(boundary_positions) - 1):
+        start_idx = int(boundary_positions[i])
+        end_idx = int(boundary_positions[i + 1])
+        segments.append(input_array[start_idx:end_idx])
+        segment_indices.append((start_idx, end_idx))
 
 
-# # Select a specific input for analysis
-# specific_input = utils.generate_toy_data(
-#     num_symbols=args.num_symbols,
-#     num_segments=args.num_segments)
-# lengths = torch.tensor([len(specific_input)])
-# specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
+    km_clusters = utils.predict_clusters(km_mod, latents)
+    gmm_clusters = utils.predict_clusters(gmm_mod, latents)
 
-test_input = [1, 1, 1, 2, 2, 1, 1, 2, 2, 0]
-specific_input = torch.tensor(test_input).unsqueeze(0).to(device)  # Add batch dimension
-lengths = torch.tensor([len(test_input)]).to(device) 
+    print("--KMEANS--")
+    utils.compare_skills_truth(specific_input[0], segments, km_clusters)
+    # print("\n--GMM--")
+    # utils.compare_skills_truth(specific_input[0], segments, gmm_clusters)
 
-# Run the model on the specific input
-_, _, _, all_b, all_z = model.forward(specific_input, lengths)
-
-# print(specific_input)
-latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
-boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
-boundary_positions = [0] + boundary_positions 
-
-input_array = specific_input.cpu().detach().numpy()[0]
-
-segments = []
-segment_indices = []
-for i in range(len(boundary_positions) - 1):
-    start_idx = int(boundary_positions[i])
-    end_idx = int(boundary_positions[i + 1])
-    segments.append(input_array[start_idx:end_idx])
-    segment_indices.append((start_idx, end_idx))
-
-print(input_array)
-print(segments)
-print(predict_clusters(k_mod, latents))
+    skills_comb = utils.get_skills_list(specific_input[0], segments, km_clusters)
+    for skill in skills_comb:
+        utils.increment_dict(skills_count, skill)
+    
 print()
+skills_count = dict(sorted(skills_count.items(), key=lambda item: item[1]))
+for p in skills_count:
+    print(p, skills_count[p])
+
+
+

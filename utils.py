@@ -3,6 +3,8 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
 EPS = 1e-17
 NEG_INF = -1e30
@@ -180,3 +182,85 @@ def get_reconstruction_accuracy(inputs, outputs, args):
     return rec_acc, rec_seq
 
 
+
+def get_all_latents(model, args, example_count = 50, device = 'cpu'):
+    all_latents = []
+
+    for _ in range(example_count):
+        specific_input = generate_toy_data(
+            num_symbols=args.num_symbols,
+            num_segments=args.num_segments)
+        lengths = torch.tensor([len(specific_input)])
+
+        specific_input = specific_input.unsqueeze(0).to(device)  # Add batch dimension
+
+        # Run the model on the specific input
+        _, _, _, _, all_z = model.forward(specific_input, lengths)
+
+        # print(specific_input)
+        for t in all_z['samples']:
+            tens = t.detach().numpy()[0].tolist()
+            all_latents.append(tens)
+
+    all_latents = np.array(all_latents)
+    return all_latents
+
+def get_km_model(latents, args):
+    kmeans = KMeans(n_clusters=args.num_segments,  n_init='auto')
+    kmeans.fit(latents)
+    return kmeans
+
+def get_gmm_model(latents, args):
+    gmm = GaussianMixture(n_components=args.num_segments)  # Specify the number of clusters
+    gmm.fit(latents)
+    return gmm  
+
+#A function to predict a latent for an input sequence into a set of clusters
+#Returns a list of clusters for each segment 
+def predict_clusters(cluster_model, new_latents):
+    cluster_to_skill = {
+        0 : 'A',
+        1 : 'B',
+        2 : 'C',
+        3 : 'D',
+        4 : 'E',
+        5 : 'F',
+        6 : 'G',
+    }
+
+    clusters = []
+    for l in new_latents:
+        cluster = cluster_model.predict([l])[0]
+        clusters.append(cluster_to_skill[cluster])
+    return clusters
+
+def skills_each_timestep(segments, clusters):
+    assert len(clusters) == len(segments)
+    skills = []
+
+    for i in range(len(segments)):
+        for _ in range(len(segments[i])):
+            skills.append(clusters[i])
+    
+    return skills
+
+
+def compare_skills_truth(states, segments, clusters):
+    skills = skills_each_timestep(segments, clusters)
+
+    print("Skills | Truth")
+    for s, t in zip(skills, states):
+        print(f"{s:<8} {t}")
+
+def increment_dict(dic, key_tuple):
+    if key_tuple in dic:
+        dic[key_tuple] += 1  # Increment count if the key exists
+    else:
+        dic[key_tuple] = 1 
+
+def get_skills_list(states, segments, clusters):
+    skill_binding = []
+    skills = skills_each_timestep(segments, clusters)
+    for s, t in zip(skills, states):
+        skill_binding.append((s, int(t)))
+    return skill_binding
