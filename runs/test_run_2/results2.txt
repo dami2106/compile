@@ -1,0 +1,699 @@
+Skills | Truth
+B        blue
+C        blue
+C        blue
+C        blue
+D        green
+D        green
+D        red
+D        red
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+C        red
+C        red
+C        red
+C        red
+C        red
+C        green
+D        blue
+D        blue
+D        blue
+D        blue
+
+----------------------------
+
+Skills | Truth
+D        blue
+D        blue
+C        red
+B        red
+B        red
+B        red
+B        red
+B        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+D        green
+D        green
+C        red
+B        red
+B        red
+B        red
+B        blue
+B        blue
+B        blue
+B        blue
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+D        green
+D        green
+D        green
+D        green
+D        green
+D        green
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+C        blue
+C        blue
+C        blue
+C        blue
+C        blue
+D        red
+D        red
+D        red
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+D        red
+D        red
+D        red
+D        red
+B        blue
+D        blue
+D        green
+D        green
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+C        red
+C        red
+C        red
+D        green
+D        green
+D        green
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+B        green
+B        green
+B        green
+D        blue
+D        blue
+D        blue
+D        red
+D        red
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+B        red
+B        red
+B        red
+D        blue
+D        blue
+D        blue
+D        green
+D        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+C        red
+C        red
+C        red
+C        red
+C        green
+C        green
+C        green
+B        blue
+B        blue
+B        blue
+
+----------------------------
+
+Skills | Truth
+C        red
+D        blue
+D        blue
+D        blue
+D        blue
+D        green
+D        green
+D        green
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+C        red
+C        red
+C        red
+B        red
+B        red
+B        red
+B        red
+C        blue
+C        green
+C        green
+
+----------------------------
+
+Skills | Truth
+C        blue
+C        blue
+C        red
+C        red
+C        red
+C        red
+D        red
+D        red
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+B        red
+B        red
+B        red
+B        red
+B        red
+B        red
+B        green
+D        green
+D        green
+D        blue
+
+----------------------------
+
+Skills | Truth
+C        red
+C        red
+C        red
+C        red
+C        green
+D        blue
+D        blue
+D        blue
+D        blue
+D        blue
+
+----------------------------
+
+Skills | Truth
+D        red
+C        green
+C        green
+B        green
+B        green
+B        blue
+B        blue
+B        blue
+B        blue
+B        blue
+
+----------------------------
+
+Skills | Truth
+C        blue
+C        blue
+C        blue
+C        blue
+C        red
+B        red
+B        red
+B        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+C        green
+C        green
+C        blue
+C        blue
+C        blue
+C        blue
+B        blue
+B        red
+B        red
+B        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+C        green
+C        green
+C        green
+C        green
+C        green
+C        green
+B        red
+B        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+D        green
+D        green
+D        green
+D        green
+C        red
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+D        green
+D        green
+C        green
+C        green
+B        red
+B        blue
+B        blue
+B        blue
+B        blue
+B        blue
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+B        blue
+B        blue
+C        green
+C        green
+C        green
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+C        green
+C        green
+C        green
+C        red
+D        red
+D        red
+D        red
+D        red
+D        blue
+D        blue
+
+----------------------------
+
+Skills | Truth
+C        blue
+B        blue
+B        blue
+B        blue
+D        green
+D        green
+D        green
+D        green
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+D        red
+D        red
+D        red
+D        red
+C        blue
+C        blue
+C        blue
+C        green
+C        green
+C        green
+
+----------------------------
+
+Skills | Truth
+B        blue
+D        blue
+D        blue
+D        blue
+B        red
+B        red
+B        red
+B        red
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+B        green
+D        green
+D        green
+D        green
+D        green
+C        blue
+C        blue
+C        blue
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+D        blue
+D        blue
+D        blue
+D        green
+D        green
+D        green
+D        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+C        red
+C        red
+C        red
+B        green
+B        green
+B        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+C        red
+D        blue
+D        blue
+D        blue
+D        blue
+B        green
+B        green
+B        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+D        red
+D        red
+C        blue
+B        blue
+B        blue
+B        blue
+B        green
+B        green
+B        green
+B        green
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+B        blue
+D        blue
+C        red
+C        red
+C        red
+C        green
+C        green
+
+----------------------------
+
+Skills | Truth
+B        red
+B        red
+B        red
+B        red
+B        red
+C        green
+C        green
+C        green
+C        green
+C        blue
+
+----------------------------
+
+Skills | Truth
+B        green
+B        green
+B        blue
+D        blue
+D        blue
+D        blue
+C        red
+C        red
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+D        blue
+D        blue
+D        blue
+C        green
+C        green
+C        green
+C        red
+
+----------------------------
+
+Skills | Truth
+D        red
+C        green
+C        green
+C        green
+C        green
+D        blue
+D        blue
+D        blue
+D        blue
+D        blue
+
+----------------------------
+
+Skills | Truth
+C        green
+B        blue
+B        blue
+B        blue
+B        blue
+B        blue
+C        red
+C        red
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+C        blue
+C        green
+C        green
+C        green
+B        green
+B        green
+B        green
+B        red
+B        red
+B        red
+
+----------------------------
+
+Skills | Truth
+C        red
+C        red
+B        red
+B        blue
+B        blue
+D        blue
+D        blue
+D        green
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+C        green
+B        green
+B        green
+B        green
+C        blue
+C        blue
+C        blue
+C        red
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+C        green
+C        green
+C        green
+B        green
+B        green
+C        blue
+C        blue
+C        red
+C        red
+C        red
+
+----------------------------
+
+Skills | Truth
+D        blue
+D        blue
+D        blue
+D        blue
+C        blue
+D        red
+D        red
+D        red
+D        red
+D        green
+
+----------------------------
+
+Skills | Truth
+C        blue
+C        blue
+C        blue
+C        blue
+C        blue
+C        green
+C        green
+C        green
+B        red
+B        red
+
+----------------------------
+
+Skills | Truth
+B        green
+B        green
+D        green
+D        green
+D        red
+D        red
+D        red
+D        red
+D        blue
+D        blue
+
+----------------------------
+
+Skills | Truth
+C        blue
+B        blue
+B        blue
+C        red
+C        red
+C        red
+C        red
+C        green
+C        green
+C        green
+
+----------------------------
+
+Skills | Truth
+D        green
+C        blue
+C        blue
+C        blue
+D        blue
+D        blue
+D        blue
+D        red
+D        red
+D        red
+
+----------------------------
+
+Skills | Truth
+B        blue
+B        blue
+B        blue
+B        blue
+B        blue
+B        red
+C        green
+C        green
+C        green
+C        green
+
+----------------------------
+
+Skills | Truth
+B        red
+B        red
+B        red
+B        red
+B        red
+D        blue
+D        blue
+D        blue
+D        green
+D        green
+
+----------------------------
+
+Skills | Truth
+B        blue
+C        blue
+C        blue
+C        blue
+C        blue
+D        green
+D        green
+D        green
+D        green
+D        red
+
+----------------------------

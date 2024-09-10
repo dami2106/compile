@@ -5,24 +5,28 @@ import datetime
 import json
 import torch
 import numpy as np
-# import gym
 
 import utils
 import modules
+from torch.utils.tensorboard import SummaryWriter
+
+from format_skills import compare_skills_truth, determine_objectives
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=100,
                     help='Number of training iterations.')
 
-parser.add_argument('--learning-rate', type=float, default=1e-2,
+parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=32,
+parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=6,
+parser.add_argument('--latent-dim', type=int, default=64,
                     help='Dimensionality of latent variables.')
-parser.add_argument('--latent-dist', type=str, default='concrete',
+parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
-parser.add_argument('--batch-size', type=int, default=128,
+parser.add_argument('--batch-size', type=int, default=512,
                     help='Mini-batch size (for averaging gradients).')
 
 parser.add_argument('--num-segments', type=int, default=3,
@@ -37,11 +41,9 @@ parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=11,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--atari-env-name', type=str, default='alien',
-                    help='name of the atari env')
 parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and config are saved')
-parser.add_argument('--random-seed', type=int, default=0,
+parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
@@ -105,6 +107,8 @@ test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_acti
 
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
+writer = SummaryWriter(log_dir = args.save_dir)
+
 # Train model.
 print('Training model...')
 # for step in range(args.iterations):
@@ -140,30 +144,69 @@ while step < args.iterations:
         batch_loss = nll.item()
         print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
             step, batch_loss, batch_acc))
-        # print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
-        # print('reconstruction: {}'.format(rec[-1]))
+        
+         # Log to TensorBoard
+        writer.add_scalar('Loss/nll_train', batch_loss, step)
+        writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+        print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
+        print('reconstruction: {}'.format(rec[-1]))
     
     step += 1
 
+writer.close()
 
-# Choose a single test input
-single_test_input = test_data_states[0:1]  # Select the first trajectory for testing
-single_test_action = test_action_states[0:1]  # Corresponding action sequence
-single_test_length = torch.tensor([max_steps]).to(device)
 
-# Convert to tensors and send to the appropriate device (CPU or GPU)
-single_test_input_tensor = torch.tensor(single_test_input).to(device)
-single_test_action_tensor = torch.tensor(single_test_action).to(device)
-single_test_inputs = (single_test_input_tensor, single_test_action_tensor)
-
-# Run forward pass on the single test input
 model.eval()
-all_encs, all_recs, all_masks, all_b, all_z = model.forward(single_test_inputs, single_test_length)
+
+# kmeans = create_cluster_model(train_data_states, train_action_states, model)
+
+for i in range(len(test_data_states)):
+
+    # Choose a single test input
+    single_test_input = test_data_states[i:i + 1]  # Select the first trajectory for testing
+    single_test_action = test_action_states[i: i +1]  # Corresponding action sequence
+    single_test_length = torch.tensor([max_steps]).to(device)
+
+    # Convert to tensors and send to the appropriate device (CPU or GPU)
+    single_test_input_tensor = torch.tensor(single_test_input).to(device)
+    single_test_action_tensor = torch.tensor(single_test_action).to(device)
+    single_test_inputs = (single_test_input_tensor, single_test_action_tensor)
+
+
+    _, _, _, all_b, all_z = model.forward(single_test_inputs, single_test_length)
+
+    # print(specific_input)
+    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+    boundary_positions = [0] + boundary_positions 
+
+    input_array = single_test_input_tensor.cpu().detach().numpy()[0]
+
+    segments = []
+    segment_indices = []
+    for i in range(len(boundary_positions) - 1):
+        start_idx = int(boundary_positions[i])
+        end_idx = int(boundary_positions[i + 1])
+        segments.append(input_array[start_idx:end_idx])
+        segment_indices.append((start_idx, end_idx))
+
+    # clusters = predict_clusters(kmeans, latents)
+
+    # compare_skills_truth(input_array, segments, clusters)
+    print(determine_objectives(input_array))
+    print(boundary_positions)
+    for s in segments:
+        print(s)
+        print()
+    
+
+    
+    print('\n----------------------------\n')
+
+
 
 
 model.save(os.path.join(run_dir, 'checkpoint.pth'))
-
-
 if args.results_file:
     with open(args.results_file, 'a') as f:
         f.write(' '.join(sys.argv))

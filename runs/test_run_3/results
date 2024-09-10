@@ -1,0 +1,18 @@
+train.py --iterations 150 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9555556774139404 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9184446930885315 128
+train.py --iterations 100 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9400001764297485 64
+train.py --iterations 80 --save-dir runs/test_run_3 --results-file runs/test_run_3/results
+ 0.9255557060241699 64

@@ -1,0 +1,4 @@
+train.py --iterations 150 --save-dir runs/test_run_2 --results-file runs/test_run_2/results
+ 0.9555556774139404 128
+train.py --iterations 150 --save-dir runs/test_run_2 --results-file runs/test_run_2/results
+ 0.9555556774139404 128
