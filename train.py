@@ -20,15 +20,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=150,
                     help='Number of training iterations.')
 
-parser.add_argument('--learning-rate', type=float, default=1e-3,
+parser.add_argument('--learning-rate', type=float, default=1e-4,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=64,
+parser.add_argument('--hidden-dim', type=int, default=128,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=32,
+parser.add_argument('--latent-dim', type=int, default=8,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
-parser.add_argument('--batch-size', type=int, default=512,
+parser.add_argument('--batch-size', type=int, default=256,
                     help='Mini-batch size (for averaging gradients).')
 
 parser.add_argument('--num-segments', type=int, default=3,
@@ -45,7 +45,7 @@ parser.add_argument('--max-steps', type=int, default=10,
                     help='maximum number of steps in an expert trajectory')
 parser.add_argument('--save-dir', type=str, default='runs/test_run_x',
                     help='directory where model and config are saved')
-parser.add_argument('--random-seed', type=int, default=45,
+parser.add_argument('--random-seed', type=int, default=69,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
@@ -94,7 +94,7 @@ data_states = np.load(data_path + 'states.npy', allow_pickle=True)
 data_actions = np.load(data_path + 'actions.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
-train_test_split_ratio = 0.01
+train_test_split_ratio = 0.001
 
 train_data_states = data_states[train_test_split[int(len(data_states)*train_test_split_ratio):]]
 train_action_states = data_actions[train_test_split[int(len(data_states)*train_test_split_ratio):]]
@@ -185,13 +185,20 @@ for i in range(len(test_data_states)):
     boundary_positions = [0] + boundary_positions 
 
     input_array = single_test_input_tensor.cpu().detach().numpy()[0]
+    act_array = single_test_action_tensor.cpu().detach().numpy()[0]
+    obj = determine_objectives(input_array)
+
 
     segments = []
+    act_segs = []
+    obj_segs = []
     segment_indices = []
     for i in range(len(boundary_positions) - 1):
         start_idx = int(boundary_positions[i])
         end_idx = int(boundary_positions[i + 1])
         segments.append(input_array[start_idx:end_idx])
+        act_segs.append(act_array[start_idx:end_idx])
+        obj_segs.append(obj[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
     clusters_km = predict_clusters(kmeans, latents)
@@ -199,6 +206,11 @@ for i in range(len(test_data_states)):
 
     compare_skills_truth(input_array, segments, clusters_km)
     compare_skills_truth(input_array, segments, clusters_gmm)
+    # for s in segments:
+    #     print(s)
+    #     print()
+    # for lat in latents:
+    #     print(lat)
  
     
     print('\n----------------------------\n')
@@ -207,6 +219,8 @@ for i in range(len(test_data_states)):
 
 
 model.save(os.path.join(run_dir, 'checkpoint.pth'))
+
+
 if args.results_file:
     with open(args.results_file, 'a') as f:
         f.write(' '.join(sys.argv))

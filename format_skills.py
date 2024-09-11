@@ -62,6 +62,7 @@ def extract_looking_for(state_set):
     colours = []
     for state in state_set:
         colours.append((state[4], state[7], state[10]))
+    colours.append((1, 1, 1))
     return colours
 
 def determine_objectives(state_set):
@@ -100,7 +101,7 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours
+    return colours[:len(colours) - 1]
 
 
 def skills_each_timestep(segments, clusters):
@@ -121,3 +122,23 @@ def compare_skills_truth(states, segments, clusters):
     print("Skills | Truth")
     for s, t in zip(skills, truth):
         print(f"{s:<8} {t}")
+
+
+if __name__ == '__main__':
+    print("here")
+
+    test =np.array(\
+    [[2,  3, -2,  2,  0,  1, -1,  0, -2,  0,  0],
+    [ 3,  3, -1,  2,  0,  2, -1,  0, -1,  0,  0],
+    [ 3,  2, -1,  1,  0,  2, -2,  0, -1, -1,  0],
+    [ 4,  2,  0,  1,  0,  3, -2,  0,  0, -1,  0],
+
+    [ 4,  1,  0,  0,  1,  3, -3,  0,  0, -2,  0],
+    [ 4,  2,  0,  0,  1,  3, -2,  0,  0, -1,  0],
+
+    [ 4,  3,  0,  0,  1,  3, -1,  0,  0,  0,  1],
+    [ 3,  3,  0,  0,  1,  2, -1,  0,  0,  0,  1],
+    [ 2,  3,  0,  0,  1,  1, -1,  0,  0,  0,  1]]
+    )
+
+    print(determine_objectives(test))

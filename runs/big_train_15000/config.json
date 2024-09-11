@@ -1,0 +1,17 @@
+{
+    "iterations": 15000,
+    "learning_rate": 0.0001,
+    "hidden_dim": 128,
+    "latent_dim": 8,
+    "latent_dist": "gaussian",
+    "batch_size": 256,
+    "num_segments": 3,
+    "no_cuda": false,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/",
+    "max_steps": 10,
+    "save_dir": "runs/big_train_15000",
+    "random_seed": 69,
+    "results_file": null,
+    "cuda": false
+}

@@ -222,17 +222,21 @@ class CompILE(nn.Module):
         return np.argmax(policy), termination
 
     def evaluate_score(self, states, actions):
+        policies_probs = []
         with torch.no_grad():
             o_vector = torch.zeros(1, self.latent_dim).to(self.device).float()
             o_vector[0, 0] = 1
             policy = self.decode(o_vector, states)
             policy = policy.view(-1, policy.shape[-1]).cpu().numpy()
             max_probs = np.take_along_axis(policy, actions.view((-1, 1)).cpu().numpy(), 1).reshape(-1)
+            policies_probs.append(max_probs)
             for option in range(1, self.latent_dim):
                 o_vector = torch.zeros(1, self.latent_dim).to(self.device).float()
                 o_vector[0, option] = 1
                 policy = self.decode(o_vector, states)
                 policy = policy.view(-1, policy.shape[-1]).cpu().numpy()
                 prob = np.take_along_axis(policy, actions.view((-1, 1)).cpu().numpy(), 1).reshape(-1)
+                policies_probs.append(prob)
                 max_probs = np.maximum(max_probs, prob)
-        return np.mean(max_probs)
+            policies_probs = np.array(policies_probs)
+        return np.mean(max_probs), policies_probs

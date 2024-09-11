@@ -256,15 +256,15 @@ def save_colours_demonstrations(nb_traces = 5000, max_steps = 10):
 
     while tn < nb_traces:
         states, actions, _, length, done, eq = run_episode(env)
-        if (length == max_steps - 1) and done and eq:
+        if (length == max_steps) and done :
             for i in range(length):
                 data_states[tn][i] = get_simple_obs(states[i])
                 data_actions[tn][i] = actions[i]
 
 
-            data_states[tn][length] = get_simple_obs(states[length])
+            # data_states[tn][length] = get_simple_obs(states[length])
             # data_states[tn][length + 1] = np.zeros(11)
-            data_actions[tn][length] = actions[length]
+            # data_actions[tn][length] = actions[length]
             # data_actions[tn][length + 1] = 0
             tn += 1
     
@@ -274,8 +274,9 @@ def save_colours_demonstrations(nb_traces = 5000, max_steps = 10):
 
 if __name__ == '__main__':
     # env = ColorsEnv('colours')
-    # while True:
-    #     ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
+    
+    # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
+    # print(ep_length)
     #     if (equi):
     #         print(equi)
     #         print(done)
@@ -294,5 +295,5 @@ if __name__ == '__main__':
 
     # print(done)
 
-    save_colours_demonstrations(5000, 10)
+    save_colours_demonstrations(50000, 10)
    
