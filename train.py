@@ -24,14 +24,14 @@ parser.add_argument('--learning-rate', type=float, default=1e-4,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=128,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=8,
+parser.add_argument('--latent-dim', type=int, default=16,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='Mini-batch size (for averaging gradients).')
 
-parser.add_argument('--num-segments', type=int, default=3,
+parser.add_argument('--num-segments', type=int, default=4,
                     help='Number of segments in data generation.')
 
 parser.add_argument('--no-cuda', action='store_true', default=False,
