@@ -20,13 +20,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=5000,
                     help='Number of training iterations.')
 
-parser.add_argument('--learning-rate', type=float, default=1e-2,
+parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=3,
+parser.add_argument('--latent-dim', type=int, default=12,
                     help='Dimensionality of latent variables.')
-parser.add_argument('--latent-dist', type=str, default='concrete',
+parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='Mini-batch size (for averaging gradients).')
@@ -43,9 +43,9 @@ parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_concrete_3',
+parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_2',
                     help='directory where model and config are saved')
-parser.add_argument('--random-seed', type=int, default=69,
+parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
