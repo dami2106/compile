@@ -17,21 +17,21 @@ from format_skills import compare_skills_truth,\
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=150,
+parser.add_argument('--iterations', type=int, default=5000,
                     help='Number of training iterations.')
 
-parser.add_argument('--learning-rate', type=float, default=1e-4,
+parser.add_argument('--learning-rate', type=float, default=1e-2,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=128,
+parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=16,
+parser.add_argument('--latent-dim', type=int, default=3,
                     help='Dimensionality of latent variables.')
-parser.add_argument('--latent-dist', type=str, default='gaussian',
+parser.add_argument('--latent-dist', type=str, default='concrete',
                     help='Choose: "gaussian" or "concrete" latent variables.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='Mini-batch size (for averaging gradients).')
 
-parser.add_argument('--num-segments', type=int, default=4,
+parser.add_argument('--num-segments', type=int, default=3,
                     help='Number of segments in data generation.')
 
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -41,9 +41,9 @@ parser.add_argument('--log-interval', type=int, default=1,
 
 parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
-parser.add_argument('--max-steps', type=int, default=10,
+parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='runs/test_run_x',
+parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_concrete_3',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=69,
                     help='Used to seed random number generators')
@@ -68,7 +68,7 @@ with open(os.path.join(run_dir, "config.json"), "w") as f:
 data_path = args.demo_file
 
 state_dim = 11
-action_dim = 4
+action_dim = 5
 max_steps = args.max_steps
 
 device = torch.device('cuda' if args.cuda else 'cpu')

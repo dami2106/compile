@@ -1,0 +1,17 @@
+{
+    "iterations": 5000,
+    "learning_rate": 0.01,
+    "hidden_dim": 256,
+    "latent_dim": 3,
+    "latent_dist": "concrete",
+    "batch_size": 256,
+    "num_segments": 3,
+    "no_cuda": false,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/",
+    "max_steps": 12,
+    "save_dir": "runs/test_run_pickup_concrete_3",
+    "random_seed": 69,
+    "results_file": null,
+    "cuda": false
+}

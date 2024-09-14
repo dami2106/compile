@@ -179,6 +179,42 @@ def get_coords(obs, search):
     pos = np.where(obs == search)   
     return [pos[0][0], pos[1][0]]
 
+def find_colour_index(list, index):
+    for i, l in enumerate(list):
+        if l[index] == 1:
+            return i
+
+    
+
+def add_in_pickup(obs_list:list, action_list:list):
+    updated_obs = obs_list.copy()
+    updated_acts = action_list.copy()
+    colour_ind = {
+        'red' : find_colour_index(obs_list, 4),
+        'green' : find_colour_index(obs_list, 7),
+        'blue' : find_colour_index(obs_list, 10)
+    }
+
+    colour_places = {
+        'red' :   4,
+        'green' : 7,
+        'blue' :  10
+    }
+
+    #Sort it in ascending order 
+    colour_ind = dict(sorted(colour_ind.items(), key=lambda item: item[1]))
+
+    for i, col in enumerate(colour_ind):
+        row_old = updated_obs[colour_ind[col] + i].copy()
+        row_old[colour_places[col]] = 0
+        updated_obs.insert((colour_ind[col] + i), row_old)
+
+        updated_acts.insert(colour_ind[col] + i, 4)
+
+    return updated_obs, updated_acts
+
+
+
 def get_simple_obs(obs):
     # [agent_x, agent_y, dis_r_x, dis_r_y, has_red, dis_g_x,\\
     #  dis_g_y, has_green, dis_b_x, dis_r_x, has_blue ] 
@@ -199,15 +235,15 @@ def get_simple_obs(obs):
 
     state[2] = agent[0] - red[0] if has_red else 0  #distance red x 
     state[3] = agent[1] - red[1] if has_red else 0 #distance red y 
-    state[4] = 0 if has_red else 1 #If have red 
+    state[4] = 0 if has_red else 1 #If have red in state
 
     state[5] = agent[0] - green[0] if has_green else 0  #distance green x 
     state[6] = agent[1] - green[1] if has_green else 0  #distance green y 
-    state[7] = 0 if has_green else 1 #If have green 
+    state[7] = 0 if has_green else 1 #If have green in state
 
     state[8] = agent[0] - blue[0] if has_blue else 0  #distance blue x 
     state[9] = agent[1] - blue[1] if has_blue else 0  #distance blue y 
-    state[10] = 0 if has_blue else 1 #If have blue 
+    state[10] = 0 if has_blue else 1 #If have blue in state
 
     return state
 
@@ -216,7 +252,7 @@ def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
     shuffle(goals) #Randomise order of colours 
     done = False 
-    ep_states = [obs.copy()]
+    ep_states = [get_simple_obs(obs.copy())]
     ep_actions = []
     ep_rewards = []
     ep_length = 0
@@ -229,23 +265,27 @@ def run_episode(env, goals = [2, 3, 4]):
 
         for action in path: 
             obs, reward, done, _ = env.step(action)
-            ep_states.append(obs.copy())
+            ep_states.append(get_simple_obs(obs.copy()))
             ep_actions.append(action)
             ep_rewards.append(reward)
             ep_length += 1
 
         path_i += 1
     
-    ep_actions.append(0)
+    ep_actions.append(-1)
     
     equi_paths = (len(set(path_lengths)) == 1) and (path_lengths[0] == 3)
 
-    return ep_states, ep_actions, ep_rewards, ep_length, done, equi_paths
+    ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
+    
+    ep_length = len(ep_states[:-1])
+
+    return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done, equi_paths
 
 
 
 
-def save_colours_demonstrations(nb_traces = 5000, max_steps = 10):
+def save_colours_demonstrations(nb_traces = 5000, max_steps = 12):
     env = ColorsEnv('colours')
     state_dim = 11
 
@@ -253,20 +293,19 @@ def save_colours_demonstrations(nb_traces = 5000, max_steps = 10):
     data_actions = np.zeros([nb_traces, max_steps], dtype='long')
 
     tn = 0 
-
+    
     while tn < nb_traces:
-        states, actions, _, length, done, eq = run_episode(env)
-        if (length == max_steps) and done :
-            for i in range(length):
-                data_states[tn][i] = get_simple_obs(states[i])
-                data_actions[tn][i] = actions[i]
 
-
-            # data_states[tn][length] = get_simple_obs(states[length])
-            # data_states[tn][length + 1] = np.zeros(11)
-            # data_actions[tn][length] = actions[length]
-            # data_actions[tn][length + 1] = 0
-            tn += 1
+        try: 
+            states, actions, _, length, done, eq = run_episode(env)
+            
+            if (length == max_steps) and done :
+                for i in range(length):
+                    data_states[tn][i] = states[i]
+                    data_actions[tn][i] = actions[i]
+                tn += 1
+        except:
+            pass
     
     np.save('trajectories/colours/states', data_states)
     np.save('trajectories/colours/actions', data_actions)
@@ -274,20 +313,21 @@ def save_colours_demonstrations(nb_traces = 5000, max_steps = 10):
 
 if __name__ == '__main__':
     # env = ColorsEnv('colours')
+    # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
     
     # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
-    # print(ep_length)
-    #     if (equi):
-    #         print(equi)
-    #         print(done)
-    #         print(ep_length)
-    #         for s in ep_states:
-    #             print(s)
-    #         break
 
-    # print(len(ep_states))
-    # print(len(ep_actions))
+    # new_states, new_acts = add_in_pickup(ep_states, ep_actions)
+
+    # for s in ep_states:
+    #     print(s)
     
+    # print()
+
+    # for s,a  in zip(new_states[:-1], new_acts[:-1]):
+    #     print(s, a)
+
+
 
     # for s, a in zip(ep_states, ep_actions):
     #     print(get_simple_obs(s), a)
@@ -295,5 +335,5 @@ if __name__ == '__main__':
 
     # print(done)
 
-    save_colours_demonstrations(50000, 10)
+    save_colours_demonstrations(50000, 12)
    
