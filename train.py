@@ -17,12 +17,12 @@ from format_skills import compare_skills_truth,\
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=5000,
+parser.add_argument('--iterations', type=int, default=7000,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=256,
+parser.add_argument('--hidden-dim', type=int, default=128,
                     help='Number of hidden units.')
 parser.add_argument('--latent-dim', type=int, default=12,
                     help='Dimensionality of latent variables.')
@@ -43,7 +43,7 @@ parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_2',
+parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_3',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
@@ -94,7 +94,7 @@ data_states = np.load(data_path + 'states.npy', allow_pickle=True)
 data_actions = np.load(data_path + 'actions.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
-train_test_split_ratio = 0.001
+train_test_split_ratio = 0.01
 
 train_data_states = data_states[train_test_split[int(len(data_states)*train_test_split_ratio):]]
 train_action_states = data_actions[train_test_split[int(len(data_states)*train_test_split_ratio):]]
