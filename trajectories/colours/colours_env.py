@@ -24,7 +24,7 @@ class ColorsEnv(gym.Env):
         self.observation_space = spaces.Box(low=0, high = 5, shape=(self.SIZE, self.SIZE), dtype=int)
 
         self.state_dim = 11
-        self.action_dim = 4
+        self.action_dim = 5
         self.env_type = 'colours'
 
         self.has_red = False
@@ -278,9 +278,9 @@ def run_episode(env, goals = [2, 3, 4]):
 
     ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
     
-    ep_length = len(ep_states[:-1])
+    ep_length = len(ep_states)
 
-    return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done, equi_paths
+    return ep_states, ep_actions, ep_rewards, ep_length, done, equi_paths
 
 
 
@@ -290,25 +290,27 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     state_dim = 11
 
     data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
-    data_actions = np.zeros([nb_traces, max_steps], dtype='long')
+    data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
 
     tn = 0 
     
     while tn < nb_traces:
-
         try: 
             states, actions, _, length, done, eq = run_episode(env)
-            
             if (length == max_steps) and done :
-                for i in range(length):
+                
+                for i in range(length - 1):
                     data_states[tn][i] = states[i]
                     data_actions[tn][i] = actions[i]
+                data_states[tn][length - 1] = states[length - 1]
+                
                 tn += 1
         except:
             pass
+        
     
-    np.save('trajectories/colours/50k_states', data_states)
-    np.save('trajectories/colours/50k_actions', data_actions)
+    np.save('trajectories/colours/5k_states_bnpo', data_states)
+    np.save('trajectories/colours/5k_actions_bnpo', data_actions)
 
 
 if __name__ == '__main__':
@@ -335,5 +337,5 @@ if __name__ == '__main__':
 
     # print(done)
 
-    save_colours_demonstrations(50000, 12)
+    save_colours_demonstrations(5000, 12)
    

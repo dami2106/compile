@@ -17,7 +17,7 @@ from format_skills import compare_skills_truth,\
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=7000,
+parser.add_argument('--iterations', type=int, default=10000,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
@@ -43,7 +43,7 @@ parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_3',
+parser.add_argument('--save-dir', type=str, default='runs/test_run_pickup_10k_steps',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
@@ -90,8 +90,8 @@ optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 # model.load('checkpoint.pth')
 
-data_states = np.load(data_path + 'states.npy', allow_pickle=True)
-data_actions = np.load(data_path + 'actions.npy', allow_pickle=True)
+data_states = np.load(data_path + '5k_states.npy', allow_pickle=True)
+data_actions = np.load(data_path + '5k_actions.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
