@@ -28,13 +28,11 @@ def get_latents(states, actions, model, args, device = 'cpu'):
 
 def create_cluster_model_KM(latents, args):
     kmeans = KMeans(n_clusters=args.num_segments , random_state=args.random_seed, n_init='auto')
-
     kmeans.fit(latents)
-
     return kmeans
 
 def create_GMM_model(latents, args):
-    gmm = GaussianMixture(n_components=args.num_segments)  # Specify the number of clusters
+    gmm = GaussianMixture(random_state=args.random_seed, n_components=args.num_segments)  # Specify the number of clusters
     gmm.fit(latents)
     return gmm
 
