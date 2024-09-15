@@ -285,7 +285,7 @@ def run_episode(env, goals = [2, 3, 4]):
 
 
 
-def save_colours_demonstrations(nb_traces = 5000, max_steps = 12):
+def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     env = ColorsEnv('colours')
     state_dim = 11
 
@@ -307,8 +307,8 @@ def save_colours_demonstrations(nb_traces = 5000, max_steps = 12):
         except:
             pass
     
-    np.save('trajectories/colours/states', data_states)
-    np.save('trajectories/colours/actions', data_actions)
+    np.save('trajectories/colours/50k_states', data_states)
+    np.save('trajectories/colours/50k_actions', data_actions)
 
 
 if __name__ == '__main__':
