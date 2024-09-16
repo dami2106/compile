@@ -290,7 +290,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     state_dim = 11
 
     data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
-    data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
+    # data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
+    data_actions = np.zeros([nb_traces, max_steps - 1, 5], dtype='float32')
 
     tn = 0 
     
@@ -301,7 +302,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
                 
                 for i in range(length - 1):
                     data_states[tn][i] = states[i]
-                    data_actions[tn][i] = actions[i]
+                    # data_actions[tn][i] = actions[i]
+                    data_actions[tn][i][int(actions[i])] = 1
                 data_states[tn][length - 1] = states[length - 1]
                 
                 tn += 1
