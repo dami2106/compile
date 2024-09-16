@@ -43,7 +43,7 @@ parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--save-dir', type=str, default='runs/15k_states_25k_iterations',
+parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
