@@ -1,5 +1,7 @@
 # CompILE implementation example
 
+* This branch works with state action pairs, where states are vectors and actions are discrete variables *
+
 This is an example implementation of the CompILE model for a sequence segmentation toy task in PyTorch with minimal dependencies. Instead of operating on state-action trajectories (pairs of state and action sequences), this simplified version of the CompILE model operates on a single input sequence.
 
 ![Compositional Imitation Learning and Execution (CompILE)](compile.png)
