@@ -10,9 +10,10 @@ import utils
 import modules
 from torch.utils.tensorboard import SummaryWriter
 
-from format_skills import compare_skills_truth,\
-    determine_objectives, predict_clusters, create_cluster_model_KM,\
-    get_latents, create_GMM_model, get_boundaries, calculate_metrics
+import pandas as pd
+
+from format_skills import determine_objectives, predict_clusters, create_cluster_model_KM,\
+    get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
 
 
 
@@ -49,6 +50,9 @@ parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
+parser.add_argument('--train-model', action='store_true', 
+                    help='Flag to indicate whether to train the model.')
+
 
 
 args = parser.parse_args()
@@ -116,56 +120,62 @@ step = 0
 rec = None
 batch_loss = 0
 batch_acc = 0
-while step < args.iterations:
-    optimizer.zero_grad()
 
-    # Generate data.
-    batch = perm.get_indices()
-    batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
-    lengths = torch.tensor([max_steps] * args.batch_size).to(device)
-    inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
+if args.train_model:
+    while step < args.iterations:
+        optimizer.zero_grad()
 
-    # Run forward pass.
-    model.train()
-    outputs = model.forward(inputs, lengths)
-    loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+        # Generate data.
+        batch = perm.get_indices()
+        batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
+        lengths = torch.tensor([max_steps] * args.batch_size).to(device)
+        inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
 
-    loss.backward()
-    optimizer.step()
+        # Run forward pass.
+        model.train()
+        outputs = model.forward(inputs, lengths)
+        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
 
-    if step % args.log_interval == 0:
-        # Run evaluation.
-        model.eval()
-        outputs = model.forward(test_inputs, test_lengths)
-        acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+        loss.backward()
+        optimizer.step()
 
-        # Accumulate metrics.
-        batch_acc = acc.item()
-        batch_loss = nll.item()
-        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
-            step, batch_loss, batch_acc))
+        if step % args.log_interval == 0:
+            # Run evaluation.
+            model.eval()
+            outputs = model.forward(test_inputs, test_lengths)
+            acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+
+            # Accumulate metrics.
+            batch_acc = acc.item()
+            batch_loss = nll.item()
+            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
+                step, batch_loss, batch_acc))
+            
+            # Log to TensorBoard
+            writer.add_scalar('Loss/nll_train', batch_loss, step)
+            writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+            #print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
+            #print('reconstruction: {}'.format(rec[-1]))
         
-         # Log to TensorBoard
-        writer.add_scalar('Loss/nll_train', batch_loss, step)
-        writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
-        #print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
-        #print('reconstruction: {}'.format(rec[-1]))
-    
-    step += 1
+        step += 1
 
-writer.close()
-
+    writer.close()
+else:
+    model.load(os.path.join(run_dir, 'checkpoint.pth'))
 
 model.eval()
 
 
-# train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+train_latents = get_latents(train_data_states, train_action_states, model, args, device)
 
 # kmeans = create_cluster_model_KM(train_latents, args)
-# gmm = create_GMM_model(train_latents, args)
+
+#Fit a Gaussian Mixture Model on the training latents
+gmm = create_GMM_model(train_latents, args)
 
 mse_list = []
 acc_list = []
+dict_list = []
 
 for i in range(len(test_data_states)):
 
@@ -204,30 +214,29 @@ for i in range(len(test_data_states)):
         obj_segs.append(obj[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
-    print("Model: ", boundary_positions)
-    print("Truth: ", get_boundaries(input_array))
+
     mse, acc = calculate_metrics(true=get_boundaries(input_array), predicted=boundary_positions)
     mse_list.append(mse)
     acc_list.append(acc)
-    print("MSE, ACC", mse, acc)
+
 
     # clusters_km = predict_clusters(kmeans, latents)
-    # clusters_gmm = predict_clusters(gmm, latents)
+    clusters_gmm = predict_clusters(gmm, latents)
 
-    # compare_skills_truth(input_array, segments, clusters_km)
     # compare_skills_truth(input_array, segments, clusters_gmm)
-    # for s in segments:
-    #     print(s)
-    #     print()
-    # for lat in latents:
-    #     print(lat)
- 
-    
+    skill_dict = get_skill_dict(input_array, segments, clusters_gmm)
+    dict_list.append(pd.DataFrame(skill_dict))
+
+
     print('\n----------------------------\n')
 
 
+skill_acc = get_skill_accuracy(dict_list)
+
 print("Mean MSE: ", np.mean(mse_list))
 print("Mean ACC: ", np.mean(acc_list))
+print("Skill Accuracy: \n", skill_acc)
+
 
 
 model.save(os.path.join(run_dir, 'checkpoint.pth'))

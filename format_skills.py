@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
+import pandas as pd
+import itertools
 
 def get_latents(states, actions, model, args, device = 'cpu'):
     all_latents = []
@@ -132,13 +134,65 @@ def skills_each_timestep(segments, clusters):
     return skills
 
 
-def compare_skills_truth(states, segments, clusters):
+def print_skills_against_truth(states, segments, clusters):
     truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
 
-    print("Skills | Truth")
+    print("Prediction | Truth")
     for s, t in zip(skills, truth):
         print(f"{s:<8} {t}")
+
+def get_skill_dict(states, segments, clusters):
+    truth = determine_objectives(states)
+    skills = skills_each_timestep(segments, clusters)
+
+    skill_dict = {
+        "Prediction" : skills,
+        "Truth" : truth
+    }
+    
+    return skill_dict
+
+
+#Takes in a list of dataframes
+def get_skill_accuracy(skill_dict_list):
+    df_new_all = pd.concat(skill_dict_list)
+    # Define the possible labels in predictions and truth values
+    prediction_labels = ['A', 'B', 'C']
+    truth_labels = ['red', 'green', 'blue']
+
+    # Generate all permutations of truth labels
+    permutations = list(itertools.permutations(truth_labels))
+
+    # Calculate total number of predictions
+    new_total_predictions = len(df_new_all)
+
+    # Create a dictionary to store accuracy for each permutation
+    accuracy_results = {}
+
+    # Iterate over each permutation, create the mapping, and calculate accuracy
+    for perm in permutations:
+        # Create the mapping for this permutation
+        label_mapping_perm = dict(zip(prediction_labels, perm))
+        
+        # Apply the mapping to predictions
+        df_new_all['Mapped_Prediction'] = df_new_all['Prediction'].map(label_mapping_perm)
+        
+        # Count correct matches (where mapped predictions match the truth)
+        correct_matches_perm = (df_new_all['Mapped_Prediction'] == df_new_all['Truth']).sum()
+        
+        # Calculate accuracy for this permutation
+        accuracy_perm = correct_matches_perm / new_total_predictions
+        
+        # Store the accuracy in the dictionary
+        accuracy_results[str(label_mapping_perm)] = accuracy_perm
+
+    # Display all permutation results sorted by accuracy
+    sorted_accuracy_results = sorted(accuracy_results.items(), key=lambda x: x[1], reverse=True)
+
+    # Output the sorted results
+    return sorted_accuracy_results
+
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 {
-    "iterations": 10,
+    "iterations": 1000,
     "learning_rate": 0.001,
     "hidden_dim": 128,
     "latent_dim": 12,
@@ -10,8 +10,9 @@
     "log_interval": 1,
     "demo_file": "trajectories/colours/",
     "max_steps": 12,
-    "save_dir": "",
+    "save_dir": "runs/test_run_1000e",
     "random_seed": 42,
     "results_file": null,
+    "train_model": false,
     "cuda": false
 }
