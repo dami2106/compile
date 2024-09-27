@@ -1,0 +1,17 @@
+{
+    "iterations": 1000,
+    "learning_rate": 0.001,
+    "hidden_dim": 128,
+    "latent_dim": 12,
+    "latent_dist": "gaussian",
+    "batch_size": 256,
+    "num_segments": 3,
+    "no_cuda": false,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/",
+    "max_steps": 12,
+    "save_dir": "",
+    "random_seed": 42,
+    "results_file": null,
+    "cuda": false
+}

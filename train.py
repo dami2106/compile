@@ -12,12 +12,12 @@ from torch.utils.tensorboard import SummaryWriter
 
 from format_skills import compare_skills_truth,\
     determine_objectives, predict_clusters, create_cluster_model_KM,\
-    get_latents, create_GMM_model
+    get_latents, create_GMM_model, get_boundaries, calculate_metrics
 
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=25000,
+parser.add_argument('--iterations', type=int, default=1000,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
@@ -90,8 +90,8 @@ optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 # model.load('checkpoint.pth')
 
-data_states = np.load(data_path + '15k_states.npy', allow_pickle=True)
-data_actions = np.load(data_path + '15k_actions.npy', allow_pickle=True)
+data_states = np.load(data_path + '5k_states.npy', allow_pickle=True)
+data_actions = np.load(data_path + '5k_actions.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
@@ -159,10 +159,13 @@ writer.close()
 model.eval()
 
 
-train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+# train_latents = get_latents(train_data_states, train_action_states, model, args, device)
 
-kmeans = create_cluster_model_KM(train_latents, args)
-gmm = create_GMM_model(train_latents, args)
+# kmeans = create_cluster_model_KM(train_latents, args)
+# gmm = create_GMM_model(train_latents, args)
+
+mse_list = []
+acc_list = []
 
 for i in range(len(test_data_states)):
 
@@ -201,11 +204,18 @@ for i in range(len(test_data_states)):
         obj_segs.append(obj[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
-    clusters_km = predict_clusters(kmeans, latents)
-    clusters_gmm = predict_clusters(gmm, latents)
+    print("Model: ", boundary_positions)
+    print("Truth: ", get_boundaries(input_array))
+    mse, acc = calculate_metrics(true=get_boundaries(input_array), predicted=boundary_positions)
+    mse_list.append(mse)
+    acc_list.append(acc)
+    print("MSE, ACC", mse, acc)
 
-    compare_skills_truth(input_array, segments, clusters_km)
-    compare_skills_truth(input_array, segments, clusters_gmm)
+    # clusters_km = predict_clusters(kmeans, latents)
+    # clusters_gmm = predict_clusters(gmm, latents)
+
+    # compare_skills_truth(input_array, segments, clusters_km)
+    # compare_skills_truth(input_array, segments, clusters_gmm)
     # for s in segments:
     #     print(s)
     #     print()
@@ -216,6 +226,8 @@ for i in range(len(test_data_states)):
     print('\n----------------------------\n')
 
 
+print("Mean MSE: ", np.mean(mse_list))
+print("Mean ACC: ", np.mean(acc_list))
 
 
 model.save(os.path.join(run_dir, 'checkpoint.pth'))

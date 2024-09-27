@@ -101,6 +101,25 @@ def determine_objectives(state_set):
 
     return colours[:len(colours) - 1]
 
+def get_boundaries(state_set):
+    colours = determine_objectives(state_set)
+
+    #Get the index of the start of each colour segment
+    boundaries = []
+    for i in range(1, len(colours)):
+        if colours[i] != colours[i-1]:
+            boundaries.append(i)
+    return [0] + boundaries + [len(colours) - 1]
+
+
+def calculate_metrics(true, predicted, tolerance=1):
+    mse = np.mean((np.array(true) - np.array(predicted)) ** 2)
+
+    correct_boundaries = np.sum(np.abs(np.array(true) - np.array(predicted)) <= tolerance)
+    accuracy = correct_boundaries / len(true)
+
+    return mse, accuracy
+
 
 def skills_each_timestep(segments, clusters):
     assert len(clusters) == len(segments)
