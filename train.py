@@ -18,18 +18,18 @@ from format_skills import determine_objectives, predict_clusters, create_cluster
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=1000,
+parser.add_argument('--iterations', type=int, default=5000,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=128,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=12,
+parser.add_argument('--latent-dim', type=int, default=20,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
-parser.add_argument('--batch-size', type=int, default=256,
+parser.add_argument('--batch-size', type=int, default=512,
                     help='Mini-batch size (for averaging gradients).')
 
 parser.add_argument('--num-segments', type=int, default=3,
@@ -40,7 +40,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
 parser.add_argument('--log-interval', type=int, default=1,
                     help='Logging interval.')
 
-parser.add_argument('--demo-file', type=str, default='trajectories/colours/',
+parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
                     help='path to the expert trajectories file')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
@@ -94,8 +94,8 @@ optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 # model.load('checkpoint.pth')
 
-data_states = np.load(data_path + '5k_states.npy', allow_pickle=True)
-data_actions = np.load(data_path + '5k_actions.npy', allow_pickle=True)
+data_states = np.load(data_path + '_states.npy', allow_pickle=True)
+data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
@@ -111,7 +111,6 @@ test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_acti
 
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
-writer = SummaryWriter(log_dir = args.save_dir)
 
 # Train model.
 print('Training model...')
@@ -122,6 +121,7 @@ batch_loss = 0
 batch_acc = 0
 
 if args.train_model:
+    writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
 
@@ -160,15 +160,22 @@ if args.train_model:
         step += 1
 
     writer.close()
+    model.save(os.path.join(run_dir, 'checkpoint.pth'))
+    if args.results_file:
+        with open(args.results_file, 'a') as f:
+            f.write(' '.join(sys.argv))
+            f.write('\n')
+            f.write(' ')
+            f.write(str(batch_acc))
+            f.write(' ')
+            f.write(str(model.K))
+            f.write('\n')
 else:
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
 
 model.eval()
-
-
 train_latents = get_latents(train_data_states, train_action_states, model, args, device)
 
-# kmeans = create_cluster_model_KM(train_latents, args)
 
 #Fit a Gaussian Mixture Model on the training latents
 gmm = create_GMM_model(train_latents, args)
@@ -225,29 +232,21 @@ for i in range(len(test_data_states)):
 
     # compare_skills_truth(input_array, segments, clusters_gmm)
     skill_dict = get_skill_dict(input_array, segments, clusters_gmm)
+
     dict_list.append(pd.DataFrame(skill_dict))
 
 
-    print('\n----------------------------\n')
 
+    # print('\n----------------------------\n')
 
 skill_acc = get_skill_accuracy(dict_list)
 
+print("Segmentation Accuracy:")
 print("Mean MSE: ", np.mean(mse_list))
-print("Mean ACC: ", np.mean(acc_list))
-print("Skill Accuracy: \n", skill_acc)
+print("Mean Accuracy: ", np.mean(acc_list))
+print()
+print("Skill Accuracy:")
+for s in skill_acc:
+    print(s)
 
 
-
-model.save(os.path.join(run_dir, 'checkpoint.pth'))
-
-
-if args.results_file:
-    with open(args.results_file, 'a') as f:
-        f.write(' '.join(sys.argv))
-        f.write('\n')
-        f.write(' ')
-        f.write(str(batch_acc))
-        f.write(' ')
-        f.write(str(model.K))
-        f.write('\n')

@@ -101,7 +101,7 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours[:len(colours) - 1]
+    return colours[:len(colours) - 2]
 
 def get_boundaries(state_set):
     colours = determine_objectives(state_set)

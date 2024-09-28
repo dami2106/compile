@@ -1,0 +1,11 @@
+Segmentation Accuracy:
+Mean MSE:  0.25
+Mean Accuracy:  1.0
+
+Skill Accuracy:
+("{'A': 'green', 'B': 'blue', 'C': 'red'}", 0.43636363636363634)
+("{'A': 'red', 'B': 'blue', 'C': 'green'}", 0.4072727272727273)
+("{'A': 'red', 'B': 'green', 'C': 'blue'}", 0.30727272727272725)
+("{'A': 'green', 'B': 'red', 'C': 'blue'}", 0.29818181818181816)
+("{'A': 'blue', 'B': 'green', 'C': 'red'}", 0.29454545454545455)
+("{'A': 'blue', 'B': 'red', 'C': 'green'}", 0.25636363636363635)
