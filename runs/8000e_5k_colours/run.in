@@ -1,0 +1,1 @@
+python train.py --iterations 8000 --save-dir runs/8000e_5k_colours --train-model

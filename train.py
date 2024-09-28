@@ -23,9 +23,9 @@ parser.add_argument('--iterations', type=int, default=5000,
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=128,
+parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=20,
+parser.add_argument('--latent-dim', type=int, default=32,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
