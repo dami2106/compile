@@ -1,8 +1,8 @@
 {
-    "iterations": 8000,
+    "iterations": 1000,
     "learning_rate": 0.001,
     "hidden_dim": 256,
-    "latent_dim": 32,
+    "latent_dim": 12,
     "latent_dist": "gaussian",
     "batch_size": 512,
     "num_segments": 3,
@@ -10,9 +10,9 @@
     "log_interval": 1,
     "demo_file": "trajectories/colours/5k",
     "max_steps": 12,
-    "save_dir": "runs/8000e_5k_colours",
+    "save_dir": "runs/1000e_5k_colours_2",
     "random_seed": 42,
     "results_file": null,
-    "train_model": true,
+    "train_model": false,
     "cuda": false
 }

@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.mixture import GaussianMixture
 import pandas as pd
 import itertools
@@ -28,7 +28,7 @@ def get_latents(states, actions, model, args, device = 'cpu'):
     all_latents = np.array(all_latents)
     return all_latents
 
-def create_cluster_model_KM(latents, args):
+def create_KM_model(latents, args):
     kmeans = KMeans(n_clusters=args.num_segments , random_state=args.random_seed, n_init='auto')
     kmeans.fit(latents)
     return kmeans
@@ -39,23 +39,20 @@ def create_GMM_model(latents, args):
     return gmm
 
 
-def predict_clusters(cluster_model, new_latents):
+def create_DBSCAN_model(latents, eps= 1.2, min_samples = 50):
+    # Create the DBSCAN model with specified parameters (eps and min_samples)
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+    dbscan.fit(latents)
+    return dbscan
 
-    cluster_to_skill = {
-        0 : 'A',
-        1 : 'B',
-        2 : 'C',
-        3 : 'D',
-        4 : 'E',
-        5 : 'F',
-        6 : 'G',
-    }
+def predict_clusters(cluster_model, new_latents):
 
     clusters = []
     for l in new_latents:
         cluster = cluster_model.predict([l])[0]
-        clusters.append(cluster_to_skill[cluster])
+        clusters.append(chr(65 + cluster))
     return clusters
+
 
 
 def extract_looking_for(state_set):
@@ -114,13 +111,63 @@ def get_boundaries(state_set):
     return [0] + boundaries + [len(colours) - 1]
 
 
-def calculate_metrics(true, predicted, tolerance=1):
-    mse = np.mean((np.array(true) - np.array(predicted)) ** 2)
+def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance=1):
+    mse_list = []
+    l2_distance_list = []
+    total_true_positives = 0
+    total_false_positives = 0
+    total_false_negatives = 0
+    total_boundaries = 0
+    total_correct_boundaries = 0
 
-    correct_boundaries = np.sum(np.abs(np.array(true) - np.array(predicted)) <= tolerance)
-    accuracy = correct_boundaries / len(true)
+    for true_boundaries, predicted_boundaries in zip(true_boundaries_list, predicted_boundaries_list):
+        true_boundaries = np.array(true_boundaries)
+        predicted_boundaries = np.array(predicted_boundaries)
 
-    return mse, accuracy
+        # Calculate MSE for this particular datapoint
+        mse = np.mean((true_boundaries - predicted_boundaries) ** 2)
+        mse_list.append(mse)
+
+        # Calculate L2 distance for this particular datapoint
+        l2_distance = np.sqrt(np.sum((true_boundaries - predicted_boundaries) ** 2))
+        l2_distance_list.append(l2_distance)
+
+        # Calculate True Positives, False Positives, False Negatives
+        for pred in predicted_boundaries:
+            if any(np.abs(true_boundaries - pred) <= tolerance):
+                total_true_positives += 1
+            else:
+                total_false_positives += 1
+        
+        for true in true_boundaries:
+            if not any(np.abs(predicted_boundaries - true) <= tolerance):
+                total_false_negatives += 1
+
+        # Calculate correct boundaries for accuracy
+        correct_boundaries = np.sum(np.abs(true_boundaries - predicted_boundaries) <= tolerance)
+        total_correct_boundaries += correct_boundaries
+        total_boundaries += len(true_boundaries)
+
+    # Overall MSE
+    overall_mse = np.mean(mse_list)
+
+    # Overall L2 distance
+    overall_l2_distance = np.mean(l2_distance_list)
+
+    # Accuracy
+    accuracy = total_correct_boundaries / total_boundaries
+
+    # Precision: True Positives / (True Positives + False Positives)
+    precision = total_true_positives / (total_true_positives + total_false_positives) if total_true_positives + total_false_positives > 0 else 0
+
+    # Recall: True Positives / (True Positives + False Negatives)
+    recall = total_true_positives / (total_true_positives + total_false_negatives) if total_true_positives + total_false_negatives > 0 else 0
+
+    # F1 Score: Harmonic mean of Precision and Recall
+    f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+
+    return overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score
+
 
 
 def skills_each_timestep(segments, clusters):

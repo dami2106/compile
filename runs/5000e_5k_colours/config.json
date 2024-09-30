@@ -1,8 +1,8 @@
 {
     "iterations": 5000,
     "learning_rate": 0.001,
-    "hidden_dim": 128,
-    "latent_dim": 20,
+    "hidden_dim": 256,
+    "latent_dim": 32,
     "latent_dist": "gaussian",
     "batch_size": 512,
     "num_segments": 3,
@@ -13,6 +13,6 @@
     "save_dir": "runs/5000e_5k_colours",
     "random_seed": 42,
     "results_file": null,
-    "train_model": true,
+    "train_model": false,
     "cuda": false
 }

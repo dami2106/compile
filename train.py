@@ -12,20 +12,20 @@ from torch.utils.tensorboard import SummaryWriter
 
 import pandas as pd
 
-from format_skills import determine_objectives, predict_clusters, create_cluster_model_KM,\
+from format_skills import determine_objectives, predict_clusters, create_KM_model, create_DBSCAN_model,\
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
 
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=5000,
+parser.add_argument('--iterations', type=int, default=1000,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=32,
+parser.add_argument('--latent-dim', type=int, default=12,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
@@ -174,79 +174,99 @@ else:
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
 
 model.eval()
+
 train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-
-
-#Fit a Gaussian Mixture Model on the training latents
 gmm = create_GMM_model(train_latents, args)
+km = create_KM_model(train_latents, args)
+dbscan = create_DBSCAN_model(train_latents)
 
-mse_list = []
-acc_list = []
-dict_list = []
+print(dbscan.labels_)
 
-for i in range(len(test_data_states)):
+#Get the number of times each label appears
+unique, counts = np.unique(dbscan.labels_, return_counts=True)
+#Print the label and the number of times it appears in descending order
+print(np.asarray((unique, counts)).T)
 
-    # Choose a single test input
-    single_test_input = test_data_states[i:i + 1]  # Select the first trajectory for testing
-    single_test_action = test_action_states[i: i +1]  # Corresponding action sequence
-    single_test_length = torch.tensor([max_steps]).to(device)
+# true_boundaries = []
+# predicted_boundaries = []
 
-    # Convert to tensors and send to the appropriate device (CPU or GPU)
-    single_test_input_tensor = torch.tensor(single_test_input).to(device)
-    single_test_action_tensor = torch.tensor(single_test_action).to(device)
-    single_test_inputs = (single_test_input_tensor, single_test_action_tensor)
+# dict_list_gmm = []
+# dict_list_km = []
+# dict_list_db = []
 
+# for i in range(len(test_data_states)):
 
-    _, _, _, all_b, all_z = model.forward(single_test_inputs, single_test_length)
+#     # Choose a single test input
+#     single_test_input = test_data_states[i:i + 1]  # Select the first trajectory for testing
+#     single_test_action = test_action_states[i: i +1]  # Corresponding action sequence
+#     single_test_length = torch.tensor([max_steps]).to(device)
 
-    # print(specific_input)
-    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
-    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
-    boundary_positions = [0] + boundary_positions 
-
-    input_array = single_test_input_tensor.cpu().detach().numpy()[0]
-    act_array = single_test_action_tensor.cpu().detach().numpy()[0]
-    obj = determine_objectives(input_array)
-
-
-    segments = []
-    act_segs = []
-    obj_segs = []
-    segment_indices = []
-    for i in range(len(boundary_positions) - 1):
-        start_idx = int(boundary_positions[i])
-        end_idx = int(boundary_positions[i + 1])
-        segments.append(input_array[start_idx:end_idx])
-        act_segs.append(act_array[start_idx:end_idx])
-        obj_segs.append(obj[start_idx:end_idx])
-        segment_indices.append((start_idx, end_idx))
+#     # Convert to tensors and send to the appropriate device (CPU or GPU)
+#     single_test_input_tensor = torch.tensor(single_test_input).to(device)
+#     single_test_action_tensor = torch.tensor(single_test_action).to(device)
+#     single_test_inputs = (single_test_input_tensor, single_test_action_tensor)
 
 
-    mse, acc = calculate_metrics(true=get_boundaries(input_array), predicted=boundary_positions)
-    mse_list.append(mse)
-    acc_list.append(acc)
+#     _, _, _, all_b, all_z = model.forward(single_test_inputs, single_test_length)
+
+#     # print(specific_input)
+#     latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+#     boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+#     boundary_positions = [0] + boundary_positions 
+
+#     input_array = single_test_input_tensor.cpu().detach().numpy()[0]
+#     act_array = single_test_action_tensor.cpu().detach().numpy()[0]
+#     obj = determine_objectives(input_array)
 
 
-    # clusters_km = predict_clusters(kmeans, latents)
-    clusters_gmm = predict_clusters(gmm, latents)
+#     segments = []
+#     act_segs = []
+#     obj_segs = []
+#     segment_indices = []
+#     for i in range(len(boundary_positions) - 1):
+#         start_idx = int(boundary_positions[i])
+#         end_idx = int(boundary_positions[i + 1])
+#         segments.append(input_array[start_idx:end_idx])
+#         act_segs.append(act_array[start_idx:end_idx])
+#         obj_segs.append(obj[start_idx:end_idx])
+#         segment_indices.append((start_idx, end_idx))
 
-    # compare_skills_truth(input_array, segments, clusters_gmm)
-    skill_dict = get_skill_dict(input_array, segments, clusters_gmm)
 
-    dict_list.append(pd.DataFrame(skill_dict))
+#     true_boundaries.append(get_boundaries(input_array))
+#     predicted_boundaries.append(boundary_positions)
+
+#     # clusters_km = predict_clusters(kmeans, latents)
+#     clusters_gmm = predict_clusters(gmm, latents)
+#     clusters_km = predict_clusters(km, latents)
+#     # clusters_db = predict_clusters(dbscan, latents)
+
+
+#     dict_list_gmm.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_gmm)))
+#     dict_list_km.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_km)))
+#     # dict_list_db.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_db)))
 
 
 
-    # print('\n----------------------------\n')
+# skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
+# skill_acc_km = get_skill_accuracy(dict_list_km)
+# # skill_acc_db = get_skill_accuracy(dict_list_db)
 
-skill_acc = get_skill_accuracy(dict_list)
+# print("Segmentation Metrics:")
+# overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(true_boundaries, predicted_boundaries)
+# print(f"Overall MSE: {overall_mse}")
+# print(f"Overall L2 Distance: {overall_l2_distance}")
+# print(f"Accuracy: {accuracy}")
+# print(f"Precision: {precision}")
+# print(f"Recall: {recall}")
+# print(f"F1 Score: {f1_score}")
 
-print("Segmentation Accuracy:")
-print("Mean MSE: ", np.mean(mse_list))
-print("Mean Accuracy: ", np.mean(acc_list))
-print()
-print("Skill Accuracy:")
-for s in skill_acc:
-    print(s)
+
+# print("=============================================")
+# print("Skill Accuracy:")
+# print(f"GMM: {skill_acc_gmm}")
+# print()
+# print(f"KM: {skill_acc_km}")
+# print()
+# # print(f"DBSCAN: {skill_acc_db}")
 
 
