@@ -1,0 +1,24 @@
+step: 49987, nll_train: 0.819268, rec_acc_eval: 1.000
+step: 49988, nll_train: 0.798139, rec_acc_eval: 1.000
+step: 49989, nll_train: 0.745115, rec_acc_eval: 1.000
+step: 49990, nll_train: 0.773181, rec_acc_eval: 1.000
+step: 49991, nll_train: 0.781627, rec_acc_eval: 1.000
+step: 49992, nll_train: 0.680736, rec_acc_eval: 1.000
+step: 49993, nll_train: 0.742662, rec_acc_eval: 1.000
+step: 49994, nll_train: 0.838742, rec_acc_eval: 1.000
+step: 49995, nll_train: 0.730538, rec_acc_eval: 1.000
+step: 49996, nll_train: 0.753262, rec_acc_eval: 1.000
+step: 49997, nll_train: 0.852214, rec_acc_eval: 1.000
+step: 49998, nll_train: 0.845048, rec_acc_eval: 1.000
+step: 49999, nll_train: 0.832997, rec_acc_eval: 1.000
+Segmentation Accuracy:
+Mean MSE:  0.25
+Mean Accuracy:  1.0
+
+Skill Accuracy:
+("{'A': 'blue', 'B': 'green', 'C': 'red'}", 0.9896969696969697)
+("{'A': 'green', 'B': 'blue', 'C': 'red'}", 0.34606060606060607)
+("{'A': 'red', 'B': 'green', 'C': 'blue'}", 0.3412121212121212)
+("{'A': 'blue', 'B': 'red', 'C': 'green'}", 0.31272727272727274)
+("{'A': 'green', 'B': 'red', 'C': 'blue'}", 0.010303030303030303)
+("{'A': 'red', 'B': 'blue', 'C': 'green'}", 0.0)
