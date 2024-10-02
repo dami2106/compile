@@ -23,7 +23,7 @@ def get_latents(states, actions, model, args, device = 'cpu'):
         _, _, _, _, all_z = model.forward(single_test_inputs, single_test_length)
 
         for t in all_z['samples']:
-            all_latents.append(t.detach().numpy()[0].tolist())
+            all_latents.append(t.detach().cpu().numpy()[0].tolist())
 
     all_latents = np.array(all_latents)
     return all_latents

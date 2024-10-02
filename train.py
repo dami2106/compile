@@ -83,7 +83,10 @@ state_dim = 11
 action_dim = 5
 max_steps = args.max_steps
 
-device = torch.device('cuda' if args.cuda else 'cpu')
+device = torch.device('cuda')
+
+print("device", device)
+
 np.random.seed(args.random_seed) # there were some issue with reproducibility
 torch.manual_seed(args.random_seed)
 
@@ -208,7 +211,7 @@ for i in range(len(test_data_states)):
     _, _, _, all_b, all_z = model.forward(single_test_inputs, single_test_length)
 
     # print(specific_input)
-    latents =  [tensor.detach().numpy()[0].tolist() for tensor in all_z['samples']]
+    latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
     boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
     boundary_positions = [0] + boundary_positions 
 
@@ -236,11 +239,12 @@ for i in range(len(test_data_states)):
     clusters_gmm = predict_clusters(gmm, latents)
 
     dict_list_gmm.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_gmm)))
+    print_skills_against_truth(input_array, segments, clusters_gmm)
 
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
-
+print("\n=============================================")
 print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(true_boundaries, predicted_boundaries)
 print(f"Overall MSE: {overall_mse}")
@@ -254,5 +258,7 @@ print(f"F1 Score: {f1_score}")
 print("=============================================")
 print("Skill Accuracy:")
 print(f"GMM: {skill_acc_gmm}")
+print()
+
 
 
