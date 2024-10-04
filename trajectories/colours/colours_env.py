@@ -271,16 +271,16 @@ def run_episode(env, goals = [2, 3, 4]):
             ep_length += 1
 
         path_i += 1
-    
+
     ep_actions.append(-1)
-    
+
     equi_paths = (len(set(path_lengths)) == 1) and (path_lengths[0] == 3)
 
     ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
-    
-    ep_length = len(ep_states)
 
-    return ep_states, ep_actions, ep_rewards, ep_length, done, equi_paths
+    ep_length = len(ep_states[:-1])
+
+    return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done, equi_paths
 
 
 
@@ -290,22 +290,18 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     state_dim = 11
 
     data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
-    data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
-    # data_actions = np.zeros([nb_traces, max_steps - 1, 5], dtype='float32')
+    data_actions = np.zeros([nb_traces, max_steps], dtype='long')
 
     tn = 0 
     
     while tn < nb_traces:
         try: 
             states, actions, _, length, done, eq = run_episode(env)
+
             if (length == max_steps) and done :
-                
-                for i in range(length - 1):
+                for i in range(length):
                     data_states[tn][i] = states[i]
                     data_actions[tn][i] = actions[i]
-                    # data_actions[tn][i][int(actions[i])] = 1
-                # data_states[tn][length - 1] = states[length - 1]
-                
                 tn += 1
         except:
             pass

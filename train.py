@@ -102,8 +102,8 @@ parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) fo
 
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
-data_states = np.load(data_path + '_states.npy', allow_pickle=True)
-data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
+data_states = np.load(data_path + '_states_abs.npy', allow_pickle=True)
+data_actions = np.load(data_path + '_actions_abs.npy', allow_pickle=True)
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
