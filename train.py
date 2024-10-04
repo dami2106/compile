@@ -35,15 +35,12 @@ parser.add_argument('--batch-size', type=int, default=512,
 parser.add_argument('--num-segments', type=int, default=3,
                     help='Number of segments in data generation.')
 
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='Disable CUDA training.')
+
 parser.add_argument('--log-interval', type=int, default=1,
                     help='Logging interval.')
 
 parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
                     help='path to the expert trajectories file')
-parser.add_argument('--max-steps', type=int, default=12,
-                    help='maximum number of steps in an expert trajectory')
 parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
@@ -53,6 +50,12 @@ parser.add_argument('--results-file', type=str, default=None,
 parser.add_argument('--train-model', action='store_true', 
                     help='Flag to indicate whether to train the model.')
 
+parser.add_argument('--state-dim', type=int, default=11,
+                    help='Size of the state dimension')
+parser.add_argument('--action-dim', type=int, default=5,
+                    help='Size of the action dimension')
+parser.add_argument('--max-steps', type=int, default=12,
+                    help='maximum number of steps in an expert trajectory')
 
 
 args = parser.parse_args()
@@ -65,7 +68,6 @@ else:
     run_dir = args.save_dir
 
 if args.train_model:
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
     os.makedirs(run_dir, exist_ok=True)
 
     with open(os.path.join(run_dir, "config.json"), "w") as f:
@@ -78,21 +80,18 @@ else:
     args = argparse.Namespace(**config)
 
 data_path = args.demo_file
-
-state_dim = 11
-action_dim = 5
 max_steps = args.max_steps
 
-device = torch.device('cuda')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-print("device", device)
+
 
 np.random.seed(args.random_seed) # there were some issue with reproducibility
 torch.manual_seed(args.random_seed)
 
 model = modules.CompILE(
-    state_dim=state_dim,
-    action_dim=action_dim,
+    state_dim=args.state_dim,
+    action_dim=args.action_dim,
     hidden_dim=args.hidden_dim,
     latent_dim=args.latent_dim,
     max_num_segments=args.num_segments,
@@ -122,8 +121,8 @@ perm = utils.PermManager(len(train_data_states), args.batch_size)
 
 
 # Train model.
-print('Training model...')
-# for step in range(args.iterations):
+print('Training model with ', device)
+
 step = 0
 rec = None
 batch_loss = 0

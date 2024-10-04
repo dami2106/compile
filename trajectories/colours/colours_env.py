@@ -233,16 +233,16 @@ def get_simple_obs(obs):
     state[0] = agent[0] #agent x 
     state[1] = agent[1] #agent y 
 
-    state[2] = agent[0] - red[0] if has_red else 0  #distance red x 
-    state[3] = agent[1] - red[1] if has_red else 0 #distance red y 
+    state[2] = abs(agent[0] - red[0]) if has_red else 0  #distance red x 
+    state[3] = abs(agent[1] - red[1]) if has_red else 0 #distance red y 
     state[4] = 0 if has_red else 1 #If have red in state
 
-    state[5] = agent[0] - green[0] if has_green else 0  #distance green x 
-    state[6] = agent[1] - green[1] if has_green else 0  #distance green y 
+    state[5] = abs(agent[0] - green[0]) if has_green else 0  #distance green x 
+    state[6] = abs(agent[1] - green[1]) if has_green else 0  #distance green y 
     state[7] = 0 if has_green else 1 #If have green in state
 
-    state[8] = agent[0] - blue[0] if has_blue else 0  #distance blue x 
-    state[9] = agent[1] - blue[1] if has_blue else 0  #distance blue y 
+    state[8] = abs(agent[0] - blue[0]) if has_blue else 0  #distance blue x 
+    state[9] = abs(agent[1] - blue[1]) if has_blue else 0  #distance blue y 
     state[10] = 0 if has_blue else 1 #If have blue in state
 
     return state
@@ -290,8 +290,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     state_dim = 11
 
     data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
-    # data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
-    data_actions = np.zeros([nb_traces, max_steps - 1, 5], dtype='float32')
+    data_actions = np.zeros([nb_traces, max_steps - 1], dtype='long')
+    # data_actions = np.zeros([nb_traces, max_steps - 1, 5], dtype='float32')
 
     tn = 0 
     
@@ -302,17 +302,18 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
                 
                 for i in range(length - 1):
                     data_states[tn][i] = states[i]
-                    # data_actions[tn][i] = actions[i]
-                    data_actions[tn][i][int(actions[i])] = 1
-                data_states[tn][length - 1] = states[length - 1]
+                    data_actions[tn][i] = actions[i]
+                    # data_actions[tn][i][int(actions[i])] = 1
+                # data_states[tn][length - 1] = states[length - 1]
                 
                 tn += 1
         except:
             pass
-        
     
-    np.save('trajectories/colours/5k_states_bnpo', data_states)
-    np.save('trajectories/colours/5k_actions_bnpo', data_actions)
+    size = str(nb_traces).replace('0', '')
+    
+    np.save(f'trajectories/colours/{size}k_states_abs', data_states)
+    np.save(f'trajectories/colours/{size}k_actions_abs', data_actions)
 
 
 if __name__ == '__main__':
@@ -339,5 +340,5 @@ if __name__ == '__main__':
 
     # print(done)
 
-    save_colours_demonstrations(5000, 12)
+    save_colours_demonstrations(15000, 12)
    
