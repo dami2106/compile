@@ -218,6 +218,10 @@ for i in range(len(test_data_states)):
     act_array = single_test_action_tensor.cpu().detach().numpy()[0]
     obj = determine_objectives(input_array)
 
+    print("==")
+    print(boundary_positions)
+    print(get_boundaries(input_array))
+    print("==")
 
     segments = []
     act_segs = []
@@ -236,6 +240,10 @@ for i in range(len(test_data_states)):
     predicted_boundaries.append(boundary_positions)
 
     clusters_gmm = predict_clusters(gmm, latents)
+
+    print(input_array)
+    print(segments)
+    print(clusters_gmm)
 
     dict_list_gmm.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_gmm)))
     print_skills_against_truth(input_array, segments, clusters_gmm)

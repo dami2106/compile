@@ -98,7 +98,7 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours[:len(colours) - 2]
+    return colours[:len(colours) - 1]
 
 def get_boundaries(state_set):
     colours = determine_objectives(state_set)
@@ -192,7 +192,8 @@ def print_skills_against_truth(states, segments, clusters):
 def get_skill_dict(states, segments, clusters):
     truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
-
+    print(truth)
+    print(skills)
     skill_dict = {
         "Prediction" : skills,
         "Truth" : truth

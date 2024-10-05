@@ -233,16 +233,16 @@ def get_simple_obs(obs):
     state[0] = agent[0] #agent x 
     state[1] = agent[1] #agent y 
 
-    state[2] = abs(agent[0] - red[0]) if has_red else 0  #distance red x 
-    state[3] = abs(agent[1] - red[1]) if has_red else 0 #distance red y 
+    state[2] = agent[0] - red[0] if has_red else 0  #distance red x 
+    state[3] = agent[1] - red[1] if has_red else 0 #distance red y 
     state[4] = 0 if has_red else 1 #If have red in state
 
-    state[5] = abs(agent[0] - green[0]) if has_green else 0  #distance green x 
-    state[6] = abs(agent[1] - green[1]) if has_green else 0  #distance green y 
+    state[5] = agent[0] - green[0] if has_green else 0  #distance green x 
+    state[6] = agent[1] - green[1] if has_green else 0  #distance green y 
     state[7] = 0 if has_green else 1 #If have green in state
 
-    state[8] = abs(agent[0] - blue[0]) if has_blue else 0  #distance blue x 
-    state[9] = abs(agent[1] - blue[1]) if has_blue else 0  #distance blue y 
+    state[8] = agent[0] - blue[0] if has_blue else 0  #distance blue x 
+    state[9] = agent[1] - blue[1] if has_blue else 0  #distance blue y 
     state[10] = 0 if has_blue else 1 #If have blue in state
 
     return state
@@ -276,7 +276,7 @@ def run_episode(env, goals = [2, 3, 4]):
 
     equi_paths = (len(set(path_lengths)) == 1) and (path_lengths[0] == 3)
 
-    ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
+    # ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
 
     ep_length = len(ep_states[:-1])
 
@@ -308,8 +308,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_states_abs', data_states)
-    np.save(f'trajectories/colours/{size}k_actions_abs', data_actions)
+    np.save(f'trajectories/colours/{size}k_nopick_states', data_states)
+    np.save(f'trajectories/colours/{size}k_nopick_actions', data_actions)
 
 
 if __name__ == '__main__':
