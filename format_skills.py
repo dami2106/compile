@@ -194,6 +194,12 @@ def print_skills_against_truth(states, segments, clusters):
 def get_skill_dict(states, segments, clusters):
     truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
+
+    if len(truth) != len(skills):
+        print(truth)
+        print(skills)
+        raise ValueError("Length of truth and skills do not match")
+
     skill_dict = {
         "Prediction" : skills,
         "Truth" : truth

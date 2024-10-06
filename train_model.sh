@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Variables
-iterations=15
+iterations=5
 learning_rate=0.001
 hidden_dim=256
 latent_dim=32
-latent_dist="concrete"  # Or "concrete"
+latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
-demo_file="trajectories/colours/15k_concrete"
-save_dir="runs/50000e_15k_colours_concrete"
+demo_file="trajectories/colours/15k_nopick"
+save_dir="runs/50000e_15k_colours_nopick"
 random_seed=42
-train_model=false
-state_dim=12
-action_dim=5
+train_model=true
+state_dim=11
+action_dim=4
 max_steps=12
 
 # Run the train.py script with the provided arguments
@@ -30,4 +30,5 @@ python3 train.py \
     --random-seed $random_seed \
     --state-dim $state_dim \
     --action-dim $action_dim \
-    --max-steps $max_steps
+    --max-steps $max_steps \
+    $( [[ "$train_model" == true ]] && echo "--train-model" ) \

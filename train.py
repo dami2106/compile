@@ -50,7 +50,7 @@ parser.add_argument('--results-file', type=str, default=None,
 parser.add_argument('--train-model', action='store_true', 
                     help='Flag to indicate whether to train the model.')
 
-parser.add_argument('--state-dim', type=int, default=12,
+parser.add_argument('--state-dim', type=int, default=11,
                     help='Size of the state dimension')
 parser.add_argument('--action-dim', type=int, default=5,
                     help='Size of the action dimension')
@@ -244,7 +244,7 @@ for i in range(len(test_data_states)):
 
 
     skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-    dict_list_gmm.append(pd.DataFrame( get_skill_dict(state_array, state_segments, clusters_gmm)))
+    dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
 
 
