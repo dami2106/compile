@@ -50,7 +50,7 @@ parser.add_argument('--results-file', type=str, default=None,
 parser.add_argument('--train-model', action='store_true', 
                     help='Flag to indicate whether to train the model.')
 
-parser.add_argument('--state-dim', type=int, default=11,
+parser.add_argument('--state-dim', type=int, default=12,
                     help='Size of the state dimension')
 parser.add_argument('--action-dim', type=int, default=5,
                     help='Size of the action dimension')
@@ -78,6 +78,7 @@ else:
     with open(config_file_path, "r") as f:
         config = json.load(f)
     args = argparse.Namespace(**config)
+    args.train_model = False
 
 data_path = args.demo_file
 max_steps = args.max_steps
@@ -120,15 +121,13 @@ test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_acti
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
 
-# Train model.
-print('Training model with ', device)
-
 step = 0
 rec = None
 batch_loss = 0
 batch_acc = 0
 
 if args.train_model:
+    print('Training model with ', device)
     writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -162,8 +161,7 @@ if args.train_model:
             # Log to TensorBoard
             writer.add_scalar('Loss/nll_train', batch_loss, step)
             writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
-            #print('input sample: {}'.format(test_inputs[1][-1, :test_lengths[-1] - 1]))
-            #print('reconstruction: {}'.format(rec[-1]))
+
         
         step += 1
 
@@ -181,79 +179,79 @@ if args.train_model:
 else:
     print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
+    print("Model Loaded")
 
+
+print("Evaluating Model")
 model.eval()
 
+
+
 train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-gmm = create_GMM_model(train_latents, args)
+print("Training Cluster Model")
+gmm_model = create_GMM_model(train_latents, args)
 
 
-true_boundaries = []
-predicted_boundaries = []
-
+all_true_boundaries = []
+all_predicted_boundaries = []
 dict_list_gmm = []
-
 
 for i in range(len(test_data_states)):
 
-    # Choose a single test input
-    single_test_input = test_data_states[i:i + 1]  # Select the first trajectory for testing
-    single_test_action = test_action_states[i: i +1]  # Corresponding action sequence
-    single_test_length = torch.tensor([max_steps]).to(device)
+    #Get a single datapoint from the test states
+    single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
+    single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
 
-    # Convert to tensors and send to the appropriate device (CPU or GPU)
-    single_test_input_tensor = torch.tensor(single_test_input).to(device)
-    single_test_action_tensor = torch.tensor(single_test_action).to(device)
-    single_test_inputs = (single_test_input_tensor, single_test_action_tensor)
+    #Do a forward pass through the model using the single input point
+    _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
+
+    #Get the predicted boundaries and the latents for each segment
+    test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
+    predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
 
 
-    _, _, _, all_b, all_z = model.forward(single_test_inputs, single_test_length)
+    #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
+    state_array = single_input[0].cpu().detach().numpy()[0]
+    action_array = single_input[1].cpu().detach().numpy()[0]
 
-    # print(specific_input)
-    latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
-    boundary_positions = [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
-    boundary_positions = [0] + boundary_positions 
+    #Get a list of the true colour objectives at each time step and the true boundaries
+    true_colours_each_timestep = determine_objectives(state_array)
+    true_boundaries = get_boundaries(state_array)
+    all_predicted_boundaries.append(predicted_boundaries)
+    all_true_boundaries.append(true_boundaries)
 
-    input_array = single_test_input_tensor.cpu().detach().numpy()[0]
-    act_array = single_test_action_tensor.cpu().detach().numpy()[0]
-    obj = determine_objectives(input_array)
 
-    print("==")
-    print(boundary_positions)
-    print(get_boundaries(input_array))
-    print("==")
-
-    segments = []
-    act_segs = []
-    obj_segs = []
+    #Segment the states, actions, and colour objectives based on the predicted boundaries
+    #Also save the segment indices
+    state_segments = []
+    action_segments = []
+    colour_objective_segments = []
     segment_indices = []
-    for i in range(len(boundary_positions) - 1):
-        start_idx = int(boundary_positions[i])
-        end_idx = int(boundary_positions[i + 1])
-        segments.append(input_array[start_idx:end_idx])
-        act_segs.append(act_array[start_idx:end_idx])
-        obj_segs.append(obj[start_idx:end_idx])
+    for i in range(args.num_segments):
+        start_idx = int(predicted_boundaries[i])
+        end_idx = int(predicted_boundaries[i + 1]) 
+        end_idx = end_idx if end_idx < len(state_array) - 1 else len(state_array) 
+
+        state_segments.append(state_array[start_idx:end_idx])
+        action_segments.append(action_array[start_idx:end_idx])
+        colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
 
-    true_boundaries.append(get_boundaries(input_array))
-    predicted_boundaries.append(boundary_positions)
+    #Get the predicted clusters for each segment
+    clusters_gmm = predict_clusters(gmm_model, test_latents)
+    
 
-    clusters_gmm = predict_clusters(gmm, latents)
 
-    print(input_array)
-    print(segments)
-    print(clusters_gmm)
-
-    dict_list_gmm.append(pd.DataFrame( get_skill_dict(input_array, segments, clusters_gmm)))
-    print_skills_against_truth(input_array, segments, clusters_gmm)
+    skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+    dict_list_gmm.append(pd.DataFrame( get_skill_dict(state_array, state_segments, clusters_gmm)))
 
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
 print("\n=============================================")
 print("Segmentation Metrics:")
-overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(true_boundaries, predicted_boundaries)
+overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
 print(f"Overall MSE: {overall_mse}")
 print(f"Overall L2 Distance: {overall_l2_distance}")
 print(f"Accuracy: {accuracy}")

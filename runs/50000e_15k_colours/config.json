@@ -14,5 +14,7 @@
     "random_seed": 42,
     "results_file": null,
     "train_model": false,
-    "cuda": false
+    "cuda": false,
+    "state_dim": 11,
+    "action_dim": 5
 }

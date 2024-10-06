@@ -62,6 +62,8 @@ def extract_looking_for(state_set):
     colours.append((1, 1, 1))
     return colours
 
+
+
 def determine_objectives(state_set):
     trace = extract_looking_for(state_set)
    
@@ -88,7 +90,7 @@ def determine_objectives(state_set):
     
     first = (0, ind[0][0])
     second = (ind[0][0], ind[1][0])
-    third = (ind[1][0], len(trace))
+    third = (ind[1][0], len(trace) - 1)
     colours = []
 
     for i in range(first[0], first[1]):
@@ -98,7 +100,7 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours[:len(colours) - 1]
+    return colours
 
 def get_boundaries(state_set):
     colours = determine_objectives(state_set)
@@ -192,8 +194,6 @@ def print_skills_against_truth(states, segments, clusters):
 def get_skill_dict(states, segments, clusters):
     truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
-    print(truth)
-    print(skills)
     skill_dict = {
         "Prediction" : skills,
         "Truth" : truth

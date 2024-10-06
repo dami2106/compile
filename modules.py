@@ -207,7 +207,7 @@ class CompILE(nn.Module):
         torch.save(checkpoint, path)
 
     def load(self, path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=True)
         self.load_state_dict(checkpoint['model'])
         for i, subpolicy in enumerate(self.subpolicies):
             subpolicy.load_state_dict(checkpoint[f"subpolicy-{i}"])
