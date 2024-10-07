@@ -186,10 +186,15 @@ print("Evaluating Model")
 model.eval()
 
 
-
-train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-print("Training Cluster Model")
-gmm_model = create_GMM_model(train_latents, args)
+if args.train_model:
+    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+    print("Training Cluster Model")
+    gmm_model = create_GMM_model(train_latents, args)
+    torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
+else:
+    print("Loading GMM Model")
+    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
+    print("GMM Model Loaded")
 
 
 all_true_boundaries = []
@@ -209,8 +214,10 @@ for i in range(len(test_data_states)):
     test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
     predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
 
+    #Sort the predicted boundaries in ascending order (smallest to largest)
+    predicted_boundaries = sorted(predicted_boundaries)
 
-    #Skip incorrect segment predictions
+    #Skip incorrect segment predictions (when there is a boundary repeated)
     if len(set(predicted_boundaries)) < args.num_segments + 1:
         continue
 
@@ -246,11 +253,24 @@ for i in range(len(test_data_states)):
     clusters_gmm = predict_clusters(gmm_model, test_latents)
     
 
+    try:
+        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
+    except:
+        print("Failed to get skill dictionary")
+        print(state_array)
+        print("----------------")
+        print(state_segments)
+        print("----------------")
+        print(clusters_gmm)
+        print("----------------")
+        print(predicted_boundaries)
+        print("----------------")
+        print(true_boundaries)
+        print("----------------")
 
-    skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
 
 
-    dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
@@ -267,7 +287,9 @@ print(f"F1 Score: {f1_score}")
 
 print("=============================================")
 print("Skill Accuracy:")
-print(f"GMM: {skill_acc_gmm}")
+# print(f"GMM: {skill_acc_gmm}")
+for acc in skill_acc_gmm:
+    print(f"{acc}")
 print()
 
 
