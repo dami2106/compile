@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
-    get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
+    get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy, get_simple_obs_list
 
 
 
@@ -84,9 +84,6 @@ data_path = args.demo_file
 max_steps = args.max_steps
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-
 np.random.seed(args.random_seed) # there were some issue with reproducibility
 torch.manual_seed(args.random_seed)
 
@@ -103,8 +100,12 @@ parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) fo
 
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
-data_states = np.load(data_path + '_states.npy', allow_pickle=True)
+data_states = np.load(data_path + '_states.npy', allow_pickle=True).reshape(15000, 12, 25)
 data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
+
+print(data_states.shape)
+print(data_actions.shape)
+
 
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
@@ -222,8 +223,11 @@ for i in range(len(test_data_states)):
         continue
 
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-    state_array = single_input[0].cpu().detach().numpy()[0]
+    state_array = get_simple_obs_list(single_input[0].cpu().detach().numpy()[0])
     action_array = single_input[1].cpu().detach().numpy()[0]
+
+   
+
 
     #Get a list of the true colour objectives at each time step and the true boundaries
     true_colours_each_timestep = determine_objectives(state_array)

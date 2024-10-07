@@ -294,3 +294,47 @@ def get_skill_accuracy(skill_dict_list):
     return sorted_accuracy_results
 
 
+
+
+def get_coords(obs, search):
+    pos = np.where(obs == search)   
+    return [pos[0][0], pos[1][0]]
+
+def get_simple_obs(obs):
+    # [agent_x, agent_y, dis_r_x, dis_r_y, has_red, dis_g_x,\\
+    #  dis_g_y, has_green, dis_b_x, dis_r_x, has_blue ] 
+
+    has_red = 2 in obs
+    has_green = 3 in obs 
+    has_blue = 4 in obs 
+
+    agent = get_coords(obs, 1)
+    red = get_coords(obs, 2) if has_red else [-1, -1]
+    green = get_coords(obs, 3) if has_green else [-1, -1]
+    blue = get_coords(obs, 4) if has_blue else [-1, -1]
+
+    state = np.zeros(11)
+
+    state[0] = agent[0] #agent x 
+    state[1] = agent[1] #agent y 
+
+    state[2] = agent[0] - red[0] if has_red else 0  #distance red x 
+    state[3] = agent[1] - red[1] if has_red else 0 #distance red y 
+    state[4] = 0 if has_red else 1 #If have red in state
+
+    state[5] = agent[0] - green[0] if has_green else 0  #distance green x 
+    state[6] = agent[1] - green[1] if has_green else 0  #distance green y 
+    state[7] = 0 if has_green else 1 #If have green in state
+
+    state[8] = agent[0] - blue[0] if has_blue else 0  #distance blue x 
+    state[9] = agent[1] - blue[1] if has_blue else 0  #distance blue y 
+    state[10] = 0 if has_blue else 1 #If have blue in state
+
+    return state
+
+def get_simple_obs_list(obs_list):
+    new_obs_list = []
+    for obs in obs_list:
+        s_obs = np.array(obs).reshape(5, 5)
+        new_obs_list.append(get_simple_obs(s_obs))
+    return new_obs_list

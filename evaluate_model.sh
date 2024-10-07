@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-trajectory="trajectories/colours/15k_nopick"
-model_dir="runs/50000e_15k_colours_nopick"
+trajectory="trajectories/colours/15k_square"
+model_dir="runs/test_cnn"
 
 # Run the train.py script with the provided arguments
 python3 train.py \

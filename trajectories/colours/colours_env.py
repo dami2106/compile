@@ -175,9 +175,7 @@ def find_shortest_path(grid, goal_nb):
     
     return []
 
-def get_coords(obs, search):
-    pos = np.where(obs == search)   
-    return [pos[0][0], pos[1][0]]
+
 
 def find_colour_index(list, index):
     for i, l in enumerate(list):
@@ -214,6 +212,29 @@ def add_in_pickup(obs_list:list, action_list:list):
     return updated_obs, updated_acts
 
 
+def get_3d_obs(obs, size = 5):
+    new_obs =  np.zeros((4, size, size), dtype=np.uint8)
+
+    has_red = 2 in obs
+    has_green = 3 in obs 
+    has_blue = 4 in obs 
+
+    agent = get_coords(obs, 1)
+    red = get_coords(obs, 2) if has_red else [-1, -1]
+    green = get_coords(obs, 3) if has_green else [-1, -1]
+    blue = get_coords(obs, 4) if has_blue else [-1, -1]
+
+    new_obs[0, agent[0], agent[1]] = 1
+    new_obs[1, red[0], red[1]] = 1 if has_red else 0
+    new_obs[2, green[0], green[1]] = 1 if has_green else 0
+    new_obs[3, blue[0], blue[1]] = 1 if has_blue else 0
+
+    return new_obs
+
+    
+def get_coords(obs, search):
+    pos = np.where(obs == search)   
+    return [pos[0][0], pos[1][0]]
 
 def get_simple_obs(obs):
     # [agent_x, agent_y, dis_r_x, dis_r_y, has_red, dis_g_x,\\
@@ -252,7 +273,8 @@ def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
     shuffle(goals) #Randomise order of colours 
     done = False 
-    ep_states = [get_simple_obs(obs.copy())]
+    # ep_states = [get_3d_obs(obs.copy())]
+    ep_states = [obs.copy()]
     ep_actions = []
     ep_rewards = []
     ep_length = 0
@@ -265,7 +287,8 @@ def run_episode(env, goals = [2, 3, 4]):
 
         for action in path: 
             obs, reward, done, _ = env.step(action)
-            ep_states.append(get_simple_obs(obs.copy()))
+            # ep_states.append(get_3d_obs(obs.copy()))
+            ep_states.append(obs.copy())
             ep_actions.append(action)
             ep_rewards.append(reward)
             ep_length += 1
@@ -278,7 +301,7 @@ def run_episode(env, goals = [2, 3, 4]):
 
     # ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
 
-    ep_length = len(ep_states[:-1])
+    # ep_length = len(ep_states[:-1])
 
     return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done, equi_paths
 
@@ -287,9 +310,8 @@ def run_episode(env, goals = [2, 3, 4]):
 
 def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     env = ColorsEnv('colours')
-    state_dim = 11
 
-    data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
+    data_states = np.zeros([nb_traces, max_steps, 5, 5], dtype='float32')
     data_actions = np.zeros([nb_traces, max_steps], dtype='long')
 
     tn = 0 
@@ -304,16 +326,17 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
                     data_actions[tn][i] = actions[i]
                 tn += 1
         except:
+            print("Error")
             pass
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_nopick_states', data_states)
-    np.save(f'trajectories/colours/{size}k_nopick_actions', data_actions)
+    np.save(f'trajectories/colours/{size}k_square_states', data_states)
+    np.save(f'trajectories/colours/{size}k_square_actions', data_actions)
 
 
 if __name__ == '__main__':
-    # env = ColorsEnv('colours')
+    env = ColorsEnv('colours')
     # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
     
     # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
@@ -335,6 +358,18 @@ if __name__ == '__main__':
     #     print()
 
     # print(done)
+
+    # states, actions, _, length, done, eq = run_episode(env)
+
+    # for s in states:
+    #     for i in range(4):
+    #         print(s[i,:,:])
+    #     print()
+
+    # new_obs =  np.zeros((5, 5, 4), dtype=np.uint8)
+    # print(new_obs.shape)
+    # print(new_obs[:,:,0])
+
 
     save_colours_demonstrations(15000, 12)
    
