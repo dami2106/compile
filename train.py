@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import pandas as pd
 
-from format_skills import determine_objectives, predict_clusters, create_KM_model, create_DBSCAN_model,\
+from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
 
 
@@ -210,6 +210,10 @@ for i in range(len(test_data_states)):
     predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
 
 
+    #Skip incorrect segment predictions
+    if len(set(predicted_boundaries)) < args.num_segments + 1:
+        continue
+
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
     state_array = single_input[0].cpu().detach().numpy()[0]
     action_array = single_input[1].cpu().detach().numpy()[0]
@@ -244,8 +248,9 @@ for i in range(len(test_data_states)):
 
 
     skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-    dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
+
+    dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)

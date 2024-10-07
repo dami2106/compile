@@ -5,7 +5,18 @@ from sklearn.mixture import GaussianMixture
 import pandas as pd
 import itertools
 
-def get_latents(states, actions, model, args, device = 'cpu'):
+"""
+TODO SIMPLIFY THE FUNCTION
+A function to get the latents for each trajectory in the given dataset
+Creates a numpy array from the latents where each latent is a new row
+@param states: The states of the dataset
+@param actions: The actions of the dataset
+@param model: The trained model
+@param args: The arguments for the model
+@param device: The device to run the model on
+@return: A numpy array of the latents for each trajectory
+"""
+def get_latents(states, actions, model, args, device = 'cuda'):
     all_latents = []
 
     for i in range(len(states)):
@@ -28,25 +39,37 @@ def get_latents(states, actions, model, args, device = 'cpu'):
     all_latents = np.array(all_latents)
     return all_latents
 
+
+"""
+A function to create a K MEANS clustering model based on the given latents
+@param latents: The latents to create the model from
+@param args: The arguments for the model
+@return: The clustering model
+"""
 def create_KM_model(latents, args):
     kmeans = KMeans(n_clusters=args.num_segments , random_state=args.random_seed, n_init='auto')
     kmeans.fit(latents)
     return kmeans
 
+"""
+A function to create a Gaussian Mixture Model based on the given latents
+@param latents: The latents to create the model from
+@param args: The arguments for the model
+@return: The clustering model
+"""
 def create_GMM_model(latents, args):
     gmm = GaussianMixture(random_state=args.random_seed, n_components=args.num_segments)  # Specify the number of clusters
     gmm.fit(latents)
     return gmm
 
 
-def create_DBSCAN_model(latents, eps= 1.2, min_samples = 50):
-    # Create the DBSCAN model with specified parameters (eps and min_samples)
-    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-    dbscan.fit(latents)
-    return dbscan
-
+"""
+A function to predict a cluster for each latent within the latent array. Assigns a letter to each cluster
+@param cluster_model: The clustering model to use
+@param new_latents: The latents to predict the clusters for
+@return: A list of the predicted clusters
+"""
 def predict_clusters(cluster_model, new_latents):
-
     clusters = []
     for l in new_latents:
         cluster = cluster_model.predict([l])[0]
@@ -54,7 +77,11 @@ def predict_clusters(cluster_model, new_latents):
     return clusters
 
 
-
+"""
+A function to create an Nx3 numpy array of the colours that the agent is looking for at each time step
+@param state_set: The states of the trace
+@return: An Nx3 numpy array of the colours the agent is looking for at each time step
+"""
 def extract_looking_for(state_set):
     colours = []
     for state in state_set:
@@ -63,7 +90,11 @@ def extract_looking_for(state_set):
     return colours
 
 
-
+"""
+A function to determine the objectives of the agent at each time step
+@param state_set: The states of the trace
+@return: A list of the colours the agent is looking for at each time step
+"""
 def determine_objectives(state_set):
     trace = extract_looking_for(state_set)
    
@@ -102,6 +133,11 @@ def determine_objectives(state_set):
 
     return colours
 
+"""
+A function to get the boundaries of the colour segments in the state set
+@param state_set: The states of the trace
+@return: A list of the boundaries of the colour segments
+"""
 def get_boundaries(state_set):
     colours = determine_objectives(state_set)
 
@@ -113,6 +149,13 @@ def get_boundaries(state_set):
     return [0] + boundaries + [len(colours) - 1]
 
 
+"""
+A function to calculate the metrics for the predicted boundaries against the true boundaries
+@param true_boundaries_list: A list of true boundaries for each trajectory
+@param predicted_boundaries_list: A list of predicted boundaries for each trajectory
+@param tolerance: The tolerance for a predicted boundary to be considered correct (how far it can be from the true boundary)
+@return: A tuple of the overall MSE, overall L2 distance, accuracy, precision, recall, and F1 score
+"""
 def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance=1):
     mse_list = []
     l2_distance_list = []
@@ -172,7 +215,9 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
 
 
 
+#TODO FIX THIS
 def skills_each_timestep(segments, clusters):
+
     assert len(clusters) == len(segments)
     skills = []
 
@@ -196,8 +241,9 @@ def get_skill_dict(states, segments, clusters):
     skills = skills_each_timestep(segments, clusters)
 
     if len(truth) != len(skills):
-        print(truth)
-        print(skills)
+
+        # print(truth)
+        # print(skills)
         raise ValueError("Length of truth and skills do not match")
 
     skill_dict = {
@@ -248,22 +294,3 @@ def get_skill_accuracy(skill_dict_list):
     return sorted_accuracy_results
 
 
-
-if __name__ == '__main__':
-    print("here")
-
-    test =np.array(\
-    [[2,  3, -2,  2,  0,  1, -1,  0, -2,  0,  0],
-    [ 3,  3, -1,  2,  0,  2, -1,  0, -1,  0,  0],
-    [ 3,  2, -1,  1,  0,  2, -2,  0, -1, -1,  0],
-    [ 4,  2,  0,  1,  0,  3, -2,  0,  0, -1,  0],
-
-    [ 4,  1,  0,  0,  1,  3, -3,  0,  0, -2,  0],
-    [ 4,  2,  0,  0,  1,  3, -2,  0,  0, -1,  0],
-
-    [ 4,  3,  0,  0,  1,  3, -1,  0,  0,  0,  1],
-    [ 3,  3,  0,  0,  1,  2, -1,  0,  0,  0,  1],
-    [ 2,  3,  0,  0,  1,  1, -1,  0,  0,  0,  1]]
-    )
-
-    print(determine_objectives(test))
