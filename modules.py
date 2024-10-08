@@ -20,7 +20,7 @@ class CompILE(nn.Module):
             Gumbel softmax latents ('concrete').
     """
     def __init__(self, state_dim, action_dim, hidden_dim, latent_dim, max_num_segments,
-                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cpu'):
+                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cuda'):
         super(CompILE, self).__init__()
 
         self.state_dim = state_dim
@@ -36,6 +36,7 @@ class CompILE(nn.Module):
 
         self.action_embedding = nn.Embedding(action_dim, hidden_dim)
         self.state_embedding = nn.Sequential(
+            
             nn.Linear(state_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
@@ -57,21 +58,24 @@ class CompILE(nn.Module):
 
         # Decoder MLP.
         self.state_embedding_decoder = nn.Sequential(
-            # nn.Linear(state_dim, hidden_dim),
-            # nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
         )
         self.subpolicies = [nn.Sequential(
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
             nn.Linear(state_dim, action_dim),
             nn.Softmax(dim=-1),
         ).to(device) for i in range(latent_dim)]
 
     def embed_input(self, inputs):
+        print("--------")
+        print("Input shape before embedding")
+        print(inputs[0].shape)
+        
+
         state_embedding = self.state_embedding(inputs[0])
         action_embedding = self.action_embedding(inputs[1])
+
+        print("Shape after embedding")
+        print(state_embedding.shape)
+        print("--------")
 
         embedding = torch.cat([state_embedding, action_embedding], dim=-1)
         return embedding
@@ -159,46 +163,50 @@ class CompILE(nn.Module):
             return None
 
     def forward(self, inputs, lengths):
+        
+
 
         # Embed inputs.
         embeddings = self.embed_input(inputs)
 
-        # Create initial mask.
-        mask = torch.ones(
-            inputs[0].size(0), inputs[0].size(1), device=inputs[0].device)
+        # print(embeddings)
 
-        all_b = {'logits': [], 'samples': []}
-        all_z = {'logits': [], 'samples': []}
-        all_encs = []
-        all_recs = []
-        all_masks = []
-        for seg_id in range(self.max_num_segments):
+        # # Create initial mask.
+        # mask = torch.ones(
+        #     inputs[0].size(0), inputs[0].size(1), device=inputs[0].device)
 
-            # Get masked LSTM encodings of inputs.
-            encodings = self.masked_encode(embeddings, mask)
-            all_encs.append(encodings)
+        # all_b = {'logits': [], 'samples': []}
+        # all_z = {'logits': [], 'samples': []}
+        # all_encs = []
+        # all_recs = []
+        # all_masks = []
+        # for seg_id in range(self.max_num_segments):
 
-            # Get boundaries (b) for current segment.
-            logits_b, sample_b = self.get_boundaries(
-                encodings, seg_id, lengths)
-            all_b['logits'].append(logits_b)
-            all_b['samples'].append(sample_b)
+        #     # Get masked LSTM encodings of inputs.
+        #     encodings = self.masked_encode(embeddings, mask)
+        #     all_encs.append(encodings)
 
-            # Get latents (z) for current segment.
-            logits_z, sample_z = self.get_latents(
-                encodings, sample_b)
-            all_z['logits'].append(logits_z)
-            all_z['samples'].append(sample_z)
+        #     # Get boundaries (b) for current segment.
+        #     logits_b, sample_b = self.get_boundaries(
+        #         encodings, seg_id, lengths)
+        #     all_b['logits'].append(logits_b)
+        #     all_b['samples'].append(sample_b)
 
-            # Get masks for next segment.
-            mask = self.get_next_masks(all_b['samples'])
-            all_masks.append(mask)
+        #     # Get latents (z) for current segment.
+        #     logits_z, sample_z = self.get_latents(
+        #         encodings, sample_b)
+        #     all_z['logits'].append(logits_z)
+        #     all_z['samples'].append(sample_z)
 
-            # Decode current segment from latents (z).
-            reconstructions = self.decode(sample_z, inputs[0])
-            all_recs.append(reconstructions)
+        #     # Get masks for next segment.
+        #     mask = self.get_next_masks(all_b['samples'])
+        #     all_masks.append(mask)
 
-        return all_encs, all_recs, all_masks, all_b, all_z
+        #     # Decode current segment from latents (z).
+        #     reconstructions = self.decode(sample_z, inputs[0])
+        #     all_recs.append(reconstructions)
+
+        # return all_encs, all_recs, all_masks, all_b, all_z
 
     def save(self, path):
         checkpoint = {'model': self.state_dict()}

@@ -273,8 +273,8 @@ def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
     shuffle(goals) #Randomise order of colours 
     done = False 
-    # ep_states = [get_3d_obs(obs.copy())]
-    ep_states = [obs.copy()]
+    ep_states = [get_3d_obs(obs.copy())]
+    # ep_states = [obs.copy()]
     ep_actions = []
     ep_rewards = []
     ep_length = 0
@@ -287,8 +287,8 @@ def run_episode(env, goals = [2, 3, 4]):
 
         for action in path: 
             obs, reward, done, _ = env.step(action)
-            # ep_states.append(get_3d_obs(obs.copy()))
-            ep_states.append(obs.copy())
+            ep_states.append(get_3d_obs(obs.copy()))
+            # ep_states.append(obs.copy())
             ep_actions.append(action)
             ep_rewards.append(reward)
             ep_length += 1
@@ -311,7 +311,7 @@ def run_episode(env, goals = [2, 3, 4]):
 def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     env = ColorsEnv('colours')
 
-    data_states = np.zeros([nb_traces, max_steps, 5, 5], dtype='float32')
+    data_states = np.zeros([nb_traces, max_steps, 4,  5, 5], dtype='float32')
     data_actions = np.zeros([nb_traces, max_steps], dtype='long')
 
     tn = 0 
@@ -331,8 +331,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_square_states', data_states)
-    np.save(f'trajectories/colours/{size}k_square_actions', data_actions)
+    np.save(f'trajectories/colours/{size}k_layered_states', data_states)
+    np.save(f'trajectories/colours/{size}k_layered_actions', data_actions)
 
 
 if __name__ == '__main__':
@@ -371,5 +371,5 @@ if __name__ == '__main__':
     # print(new_obs[:,:,0])
 
 
-    save_colours_demonstrations(15000, 12)
+    save_colours_demonstrations(100, 12)
    

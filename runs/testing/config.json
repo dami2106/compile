@@ -1,0 +1,18 @@
+{
+    "iterations": 5,
+    "learning_rate": 0.001,
+    "hidden_dim": 5,
+    "latent_dim": 2,
+    "latent_dist": "gaussian",
+    "batch_size": 10,
+    "num_segments": 3,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/100_layered",
+    "save_dir": "runs/testing",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 100,
+    "action_dim": 4,
+    "max_steps": 12
+}

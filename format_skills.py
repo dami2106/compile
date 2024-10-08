@@ -295,6 +295,36 @@ def get_skill_accuracy(skill_dict_list):
 
 
 
+def layered_to_vector(state):
+    has_red = 1 in state[1]
+    has_green = 1 in state[2]
+    has_blue = 1 in state[3] 
+
+    agent = get_coords(state[0], 1)
+    red = get_coords(state[1], 1) if has_red else [-1, -1]
+    green = get_coords(state[2], 1) if has_green else [-1, -1]
+    blue = get_coords(state[3], 1) if has_blue else [-1, -1]
+
+    state = np.zeros(11)
+
+    state[0] = agent[0] #agent x 
+    state[1] = agent[1] #agent y 
+
+    state[2] = agent[0] - red[0] if has_red else 0  #distance red x 
+    state[3] = agent[1] - red[1] if has_red else 0 #distance red y 
+    state[4] = 0 if has_red else 1 #If have red in state
+
+    state[5] = agent[0] - green[0] if has_green else 0  #distance green x 
+    state[6] = agent[1] - green[1] if has_green else 0  #distance green y 
+    state[7] = 0 if has_green else 1 #If have green in state
+
+    state[8] = agent[0] - blue[0] if has_blue else 0  #distance blue x 
+    state[9] = agent[1] - blue[1] if has_blue else 0  #distance blue y 
+    state[10] = 0 if has_blue else 1 #If have blue in state
+
+    return state
+    
+
 
 def get_coords(obs, search):
     pos = np.where(obs == search)   
@@ -337,4 +367,11 @@ def get_simple_obs_list(obs_list):
     for obs in obs_list:
         s_obs = np.array(obs).reshape(5, 5)
         new_obs_list.append(get_simple_obs(s_obs))
+    return new_obs_list
+
+def get_simple_obs_list_from_layers(obs_list):
+    new_obs_list = []
+    for obs in obs_list:
+        s_obs = np.array(obs).reshape(4, 5, 5)
+        new_obs_list.append(layered_to_vector(s_obs))
     return new_obs_list
