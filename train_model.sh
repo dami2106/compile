@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-iterations=50000
+iterations=20000
 learning_rate=0.001
 hidden_dim=256 #256
 latent_dim=32 #32
@@ -9,7 +9,7 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered"
-save_dir="runs/cnn_test_1_50ke_15k"
+save_dir="runs/cnn_test_1_20ke_15k_config2"
 random_seed=42
 train_model=true
 state_dim=3

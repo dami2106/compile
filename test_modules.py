@@ -27,7 +27,7 @@ class TestILE(nn.Module):
         # -------------
 
         self.in_channels = 4
-        self.out_channels = 64
+        self.out_channels = 32
         self.kernel_size = 3
         self.stride = 1
 
