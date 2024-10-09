@@ -99,7 +99,7 @@ torch.manual_seed(args.random_seed)
 #     device=device).to(device)
 
 model = test_modules.TestILE(
-    state_dim=args.state_dim,
+    state_dim=(4, 5, 5),
     action_dim=args.action_dim,
     hidden_dim=args.hidden_dim,
     latent_dim=args.latent_dim,
@@ -154,169 +154,166 @@ if args.train_model:
         lengths = torch.tensor([max_steps] * args.batch_size).to(device)
         inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
 
-        print("----------")
-        print("State shape batch before forward")
-        print(inputs[0].shape)
-        print("Lengths before forward")
-        print(lengths)
-        print("----------\n")
+  
         # Run forward pass.
         model.train()
         outputs = model.forward(inputs, lengths)
-        break
-#         loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+        
+        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+       
 
-#         loss.backward()
-#         optimizer.step()
+        loss.backward()
+        optimizer.step()
+        
 
-#         if step % args.log_interval == 0:
-#             # Run evaluation.
-#             model.eval()
-#             outputs = model.forward(test_inputs, test_lengths)
-#             acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+        if step % args.log_interval == 0:
+            # Run evaluation.
+            model.eval()
+            outputs = model.forward(test_inputs, test_lengths)
+            acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
 
-#             # Accumulate metrics.
-#             batch_acc = acc.item()
-#             batch_loss = nll.item()
-#             print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
-#                 step, batch_loss, batch_acc))
+            # Accumulate metrics.
+            batch_acc = acc.item()
+            batch_loss = nll.item()
+            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
+                step, batch_loss, batch_acc))
             
-#             # Log to TensorBoard
-#             writer.add_scalar('Loss/nll_train', batch_loss, step)
-#             writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+            # Log to TensorBoard
+            writer.add_scalar('Loss/nll_train', batch_loss, step)
+            writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
 
         
-#         step += 1
+        step += 1
 
-#     writer.close()
-#     model.save(os.path.join(run_dir, 'checkpoint.pth'))
-#     if args.results_file:
-#         with open(args.results_file, 'a') as f:
-#             f.write(' '.join(sys.argv))
-#             f.write('\n')
-#             f.write(' ')
-#             f.write(str(batch_acc))
-#             f.write(' ')
-#             f.write(str(model.K))
-#             f.write('\n')
-# else:
-#     print("Loading Model")
-#     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-#     print("Model Loaded")
-
-
-# print("Evaluating Model")
-# model.eval()
+    writer.close()
+    model.save(os.path.join(run_dir, 'checkpoint.pth'))
+    if args.results_file:
+        with open(args.results_file, 'a') as f:
+            f.write(' '.join(sys.argv))
+            f.write('\n')
+            f.write(' ')
+            f.write(str(batch_acc))
+            f.write(' ')
+            f.write(str(model.K))
+            f.write('\n')
+else:
+    print("Loading Model")
+    model.load(os.path.join(run_dir, 'checkpoint.pth'))
+    print("Model Loaded")
 
 
-# if args.train_model:
-#     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-#     print("Training Cluster Model")
-#     gmm_model = create_GMM_model(train_latents, args)
-#     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
-# else:
-#     print("Loading GMM Model")
-#     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-#     print("GMM Model Loaded")
+print("Evaluating Model")
+model.eval()
 
 
-# all_true_boundaries = []
-# all_predicted_boundaries = []
-# dict_list_gmm = []
+if args.train_model:
+    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+    print("Training Cluster Model")
+    gmm_model = create_GMM_model(train_latents, args)
+    torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
+else:
+    print("Loading GMM Model")
+    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
+    print("GMM Model Loaded")
 
-# for i in range(len(test_data_states)):
 
-#     #Get a single datapoint from the test states
-#     single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
-#     single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
+all_true_boundaries = []
+all_predicted_boundaries = []
+dict_list_gmm = []
 
-#     #Do a forward pass through the model using the single input point
-#     _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
+for i in range(len(test_data_states)):
 
-#     #Get the predicted boundaries and the latents for each segment
-#     test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
-#     predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+    #Get a single datapoint from the test states
+    single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
+    single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
 
-#     #Sort the predicted boundaries in ascending order (smallest to largest)
-#     predicted_boundaries = sorted(predicted_boundaries)
+    #Do a forward pass through the model using the single input point
+    _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
 
-#     #Skip incorrect segment predictions (when there is a boundary repeated)
-#     if len(set(predicted_boundaries)) < args.num_segments + 1:
-#         continue
+    #Get the predicted boundaries and the latents for each segment
+    test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
+    predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
 
-#     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-#     state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
-#     action_array = single_input[1].cpu().detach().numpy()[0]
+    #Sort the predicted boundaries in ascending order (smallest to largest)
+    predicted_boundaries = sorted(predicted_boundaries)
+
+    #Skip incorrect segment predictions (when there is a boundary repeated)
+    if len(set(predicted_boundaries)) < args.num_segments + 1:
+        continue
+
+    #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
+    state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
+    action_array = single_input[1].cpu().detach().numpy()[0]
 
    
 
 
-#     #Get a list of the true colour objectives at each time step and the true boundaries
-#     true_colours_each_timestep = determine_objectives(state_array)
-#     true_boundaries = get_boundaries(state_array)
-#     all_predicted_boundaries.append(predicted_boundaries)
-#     all_true_boundaries.append(true_boundaries)
+    #Get a list of the true colour objectives at each time step and the true boundaries
+    true_colours_each_timestep = determine_objectives(state_array)
+    true_boundaries = get_boundaries(state_array)
+    all_predicted_boundaries.append(predicted_boundaries)
+    all_true_boundaries.append(true_boundaries)
 
 
-#     #Segment the states, actions, and colour objectives based on the predicted boundaries
-#     #Also save the segment indices
-#     state_segments = []
-#     action_segments = []
-#     colour_objective_segments = []
-#     segment_indices = []
-#     for i in range(args.num_segments):
-#         start_idx = int(predicted_boundaries[i])
-#         end_idx = int(predicted_boundaries[i + 1]) 
-#         end_idx = end_idx if end_idx < len(state_array) - 1 else len(state_array) 
+    #Segment the states, actions, and colour objectives based on the predicted boundaries
+    #Also save the segment indices
+    state_segments = []
+    action_segments = []
+    colour_objective_segments = []
+    segment_indices = []
+    for i in range(args.num_segments):
+        start_idx = int(predicted_boundaries[i])
+        end_idx = int(predicted_boundaries[i + 1]) 
+        end_idx = end_idx if end_idx < len(state_array) - 1 else len(state_array) 
 
-#         state_segments.append(state_array[start_idx:end_idx])
-#         action_segments.append(action_array[start_idx:end_idx])
-#         colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
-#         segment_indices.append((start_idx, end_idx))
+        state_segments.append(state_array[start_idx:end_idx])
+        action_segments.append(action_array[start_idx:end_idx])
+        colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
+        segment_indices.append((start_idx, end_idx))
 
 
-#     #Get the predicted clusters for each segment
-#     clusters_gmm = predict_clusters(gmm_model, test_latents)
+    #Get the predicted clusters for each segment
+    clusters_gmm = predict_clusters(gmm_model, test_latents)
     
 
-#     try:
-#         skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-#         dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
-#     except:
-#         print("Failed to get skill dictionary")
-#         print(state_array)
-#         print("----------------")
-#         print(state_segments)
-#         print("----------------")
-#         print(clusters_gmm)
-#         print("----------------")
-#         print(predicted_boundaries)
-#         print("----------------")
-#         print(true_boundaries)
-#         print("----------------")
+    try:
+        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
+    except:
+        print("Failed to get skill dictionary")
+        print(state_array)
+        print("----------------")
+        print(state_segments)
+        print("----------------")
+        print(clusters_gmm)
+        print("----------------")
+        print(predicted_boundaries)
+        print("----------------")
+        print(true_boundaries)
+        print("----------------")
 
 
 
 
 
-# skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
-# print("\n=============================================")
-# print("Segmentation Metrics:")
-# overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-# print(f"Overall MSE: {overall_mse}")
-# print(f"Overall L2 Distance: {overall_l2_distance}")
-# print(f"Accuracy: {accuracy}")
-# print(f"Precision: {precision}")
-# print(f"Recall: {recall}")
-# print(f"F1 Score: {f1_score}")
+skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
+print("\n=============================================")
+print("Segmentation Metrics:")
+overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
+print(f"Overall MSE: {overall_mse}")
+print(f"Overall L2 Distance: {overall_l2_distance}")
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1_score}")
 
 
-# print("=============================================")
-# print("Skill Accuracy:")
-# # print(f"GMM: {skill_acc_gmm}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
-# print()
+print("=============================================")
+print("Skill Accuracy:")
+# print(f"GMM: {skill_acc_gmm}")
+for acc in skill_acc_gmm:
+    print(f"{acc}")
+print()
 
 
 
