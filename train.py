@@ -15,7 +15,11 @@ import pandas as pd
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
 
-
+# import matplotlib
+# matplotlib.use('Qt5Agg')  # or 'Qt5Agg', 'MacOSX', depending on your system
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from mpl_toolkits.mplot3d import Axes3D
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -99,6 +103,8 @@ model = modules.CompILE(
     latent_dist=args.latent_dist,
     device=device).to(device)
 
+
+
 parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], [])
 
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
@@ -125,6 +131,8 @@ step = 0
 rec = None
 batch_loss = 0
 batch_acc = 0
+best_rec_acc = 0
+best_nll = np.inf
 
 if args.train_model:
     print('Training model with ', device)
@@ -157,6 +165,10 @@ if args.train_model:
             batch_loss = nll.item()
             print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
                 step, batch_loss, batch_acc))
+            if batch_acc > best_rec_acc and batch_loss < best_nll:
+                best_rec_acc = batch_acc
+                best_nll = batch_loss
+                model.save(os.path.join(run_dir, 'best_checkpoint.pth'))
             
             # Log to TensorBoard
             writer.add_scalar('Loss/nll_train', batch_loss, step)
@@ -167,6 +179,8 @@ if args.train_model:
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
+    print("Best Reconstruction Accuracy: ", best_rec_acc)
+    print("Best NLL: ", best_nll)
     if args.results_file:
         with open(args.results_file, 'a') as f:
             f.write(' '.join(sys.argv))
@@ -193,8 +207,23 @@ if args.train_model:
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 else:
     print("Loading GMM Model")
-    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
+    # gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
     print("GMM Model Loaded")
+
+    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+    pca = PCA(n_components=3)
+    latents_3d = pca.fit_transform(train_latents)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], c='blue', marker='o')
+
+    ax.set_xlabel('PCA 1')
+    ax.set_ylabel('PCA 2')
+    ax.set_zlabel('PCA 3')
+
+    # plt.show()
+    plt.savefig('plot.png')
+
 
 
 all_true_boundaries = []
