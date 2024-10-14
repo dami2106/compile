@@ -20,6 +20,7 @@ from format_skills import determine_objectives, predict_clusters, create_KM_mode
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.manifold import TSNE
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -211,18 +212,32 @@ else:
     print("GMM Model Loaded")
 
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    pca = PCA(n_components=3)
-    latents_3d = pca.fit_transform(train_latents)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], c='blue', marker='o')
+    # pca = PCA(n_components=3)
+    # latents_3d = pca.fit_transform(train_latents)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], c='blue', marker='o')
 
-    ax.set_xlabel('PCA 1')
-    ax.set_ylabel('PCA 2')
-    ax.set_zlabel('PCA 3')
+    # ax.set_xlabel('PCA 1')
+    # ax.set_ylabel('PCA 2')
+    # ax.set_zlabel('PCA 3')
 
     # plt.show()
-    plt.savefig('plot.png')
+
+    tsne = TSNE(n_components=3,  perplexity=40, n_iter=300)
+    latents_3d_tsne = tsne.fit_transform(train_latents)
+
+    # Plotting in 3D
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(latents_3d_tsne[:, 0], latents_3d_tsne[:, 1], latents_3d_tsne[:, 2], c='blue', marker='o')
+
+    ax.set_xlabel('t-SNE 1')
+    ax.set_ylabel('t-SNE 2')
+    ax.set_zlabel('t-SNE 3')
+
+    plt.show()
+    # plt.savefig('plot.png')
 
 
 
