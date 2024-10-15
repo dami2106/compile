@@ -13,14 +13,15 @@ from torch.utils.tensorboard import SummaryWriter
 import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
-    get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth, get_skill_accuracy
+    get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
+        get_skill_accuracy, generate_elbow_plot
 
-# import matplotlib
-# matplotlib.use('Qt5Agg')  # or 'Qt5Agg', 'MacOSX', depending on your system
+
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import LabelEncoder
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -201,49 +202,23 @@ print("Evaluating Model")
 model.eval()
 
 
-if args.train_model:
+# Try load in the clustering model if it exists
+try:
+    print("Loading GMM Model")
+    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
+    print("GMM Model Loaded")
+except:
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
     print("Training Cluster Model")
-    gmm_model = create_GMM_model(train_latents, args)
+    gmm_model = create_GMM_model(train_latents, args, 4)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
-else:
-    print("Loading GMM Model")
-    # gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    print("GMM Model Loaded")
-
-    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    # pca = PCA(n_components=3)
-    # latents_3d = pca.fit_transform(train_latents)
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], c='blue', marker='o')
-
-    # ax.set_xlabel('PCA 1')
-    # ax.set_ylabel('PCA 2')
-    # ax.set_zlabel('PCA 3')
-
-    # plt.show()
-
-    tsne = TSNE(n_components=3,  perplexity=40, n_iter=300)
-    latents_3d_tsne = tsne.fit_transform(train_latents)
-
-    # Plotting in 3D
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(latents_3d_tsne[:, 0], latents_3d_tsne[:, 1], latents_3d_tsne[:, 2], c='blue', marker='o')
-
-    ax.set_xlabel('t-SNE 1')
-    ax.set_ylabel('t-SNE 2')
-    ax.set_zlabel('t-SNE 3')
-
-    plt.show()
-    # plt.savefig('plot.png')
 
 
 
 all_true_boundaries = []
 all_predicted_boundaries = []
 dict_list_gmm = []
+
 
 for i in range(len(test_data_states)):
 
@@ -295,6 +270,7 @@ for i in range(len(test_data_states)):
 
     #Get the predicted clusters for each segment
     clusters_gmm = predict_clusters(gmm_model, test_latents)
+
     
 
     try:
@@ -315,9 +291,21 @@ for i in range(len(test_data_states)):
 
 
 
+# train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+# n_components, aic, bic = generate_elbow_plot(train_latents, args)
+# plt.figure(figsize=(8, 6))
+# plt.plot(n_components, aic, label='AIC', marker='o')
+# plt.plot(n_components, bic, label='BIC', marker='o')
+# plt.xlabel('Number of Components')
+# plt.ylabel('AIC / BIC')
+# plt.title('Elbow Method for GMM - AIC and BIC')
+# plt.legend()
+# plt.grid(True)
+# plt.savefig(os.path.join(run_dir, 'elbow_plot.png'))
 
 
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
+
+skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 4)
 print("\n=============================================")
 print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)

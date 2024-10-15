@@ -57,10 +57,30 @@ A function to create a Gaussian Mixture Model based on the given latents
 @param args: The arguments for the model
 @return: The clustering model
 """
-def create_GMM_model(latents, args):
-    gmm = GaussianMixture(random_state=args.random_seed, n_components=args.num_segments)  # Specify the number of clusters
+def create_GMM_model(latents, args, components = 3):
+    gmm = GaussianMixture(random_state=args.random_seed, n_components=components)  # Specify the number of clusters
     gmm.fit(latents)
     return gmm
+
+"""
+A function to generate a list of AIC, BIC for a range of components on a GMM model
+Useful to plot an Elbow chart to see the number of skills
+@param latents: The latents to create the model from
+@param args: The arguments for the model
+@param n_components: The range of components to test
+@return: A tuple of the n_components, aic, bic
+"""
+def generate_elbow_plot(latents, args, n_components = np.arange(1, 12)):
+    aic = []
+    bic = []
+    for n in n_components:
+        gmm = GaussianMixture(n_components=n, random_state=42)
+        gmm.fit(latents)
+        aic.append(gmm.aic(latents))
+        bic.append(gmm.bic(latents))
+
+    return n_components, aic, bic
+
 
 
 """
@@ -255,14 +275,14 @@ def get_skill_dict(states, segments, clusters):
 
 
 #Takes in a list of dataframes
-def get_skill_accuracy(skill_dict_list):
+def get_skill_accuracy(skill_dict_list, cluster_num = 4):
     df_new_all = pd.concat(skill_dict_list)
-    # Define the possible labels in predictions and truth values
-    prediction_labels = ['A', 'B', 'C']
+ 
     truth_labels = ['red', 'green', 'blue']
+    prediction_labels = [chr(65 + x) for x in range(cluster_num)]
 
     # Generate all permutations of truth labels
-    permutations = list(itertools.permutations(truth_labels))
+    permutations = list(itertools.permutations(prediction_labels, 3))
 
     # Calculate total number of predictions
     new_total_predictions = len(df_new_all)
@@ -273,7 +293,7 @@ def get_skill_accuracy(skill_dict_list):
     # Iterate over each permutation, create the mapping, and calculate accuracy
     for perm in permutations:
         # Create the mapping for this permutation
-        label_mapping_perm = dict(zip(prediction_labels, perm))
+        label_mapping_perm = dict(zip(perm, truth_labels))
         
         # Apply the mapping to predictions
         df_new_all['Mapped_Prediction'] = df_new_all['Prediction'].map(label_mapping_perm)
