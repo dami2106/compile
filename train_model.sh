@@ -8,11 +8,11 @@ latent_dim=32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
-demo_file="trajectories/colours/15k_nopick"
-save_dir="runs/50000e_15k_colours_nopick_check"
+demo_file="trajectories/colours/15k_flattened_nopick"
+save_dir="runs/50000e_15k_colours_flattened_nopick"
 random_seed=42
 train_model=true
-state_dim=11
+state_dim=25
 action_dim=4
 max_steps=12
 

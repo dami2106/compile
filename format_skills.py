@@ -313,4 +313,44 @@ def get_skill_accuracy(skill_dict_list, cluster_num = 4):
     # Output the sorted results
     return sorted_accuracy_results
 
+def get_coords(obs, search):
+    pos = np.where(obs == search)   
+    return [pos[0][0], pos[1][0]]
 
+def get_simple_obs(obs):
+    # [agent_x, agent_y, dis_r_x, dis_r_y, has_red, dis_g_x,\\
+    #  dis_g_y, has_green, dis_b_x, dis_r_x, has_blue ] 
+
+    has_red = 2 in obs
+    has_green = 3 in obs 
+    has_blue = 4 in obs 
+
+    agent = get_coords(obs, 1)
+    red = get_coords(obs, 2) if has_red else [-1, -1]
+    green = get_coords(obs, 3) if has_green else [-1, -1]
+    blue = get_coords(obs, 4) if has_blue else [-1, -1]
+
+    state = np.zeros(11)
+
+    state[0] = agent[0] #agent x 
+    state[1] = agent[1] #agent y 
+
+    state[2] = red[0]  #distance red x 
+    state[3] = red[1] #distance red y 
+    state[4] = 0 if has_red else 1 #If have red in state
+
+    state[5] = green[0]  #distance green x 
+    state[6] = green[1]  #distance green y 
+    state[7] = 0 if has_green else 1 #If have green in state
+
+    state[8] = blue[0]  #distance blue x 
+    state[9] = blue[1]  #distance blue y 
+    state[10] = 0 if has_blue else 1 #If have blue in state
+
+    return state
+
+def get_simple_obs_list(obs_list):
+    simple_obs = []
+    for obs in obs_list:
+        simple_obs.append(get_simple_obs(obs.reshape(5, 5)))    
+    return np.array(simple_obs)

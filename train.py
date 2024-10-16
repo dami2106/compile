@@ -14,7 +14,7 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-        get_skill_accuracy, generate_elbow_plot
+        get_skill_accuracy, generate_elbow_plot, get_simple_obs_list
 
 
 import matplotlib.pyplot as plt
@@ -210,7 +210,7 @@ try:
 except:
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
     print("Training Cluster Model")
-    gmm_model = create_GMM_model(train_latents, args, 4)
+    gmm_model = create_GMM_model(train_latents, args, 3)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
 
@@ -243,6 +243,8 @@ for i in range(len(test_data_states)):
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
     state_array = single_input[0].cpu().detach().numpy()[0]
     action_array = single_input[1].cpu().detach().numpy()[0]
+
+    state_array = get_simple_obs_list(state_array)
 
     #Get a list of the true colour objectives at each time step and the true boundaries
     true_colours_each_timestep = determine_objectives(state_array)
@@ -305,7 +307,7 @@ for i in range(len(test_data_states)):
 
 
 
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 4)
+skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
 print("\n=============================================")
 print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
