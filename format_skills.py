@@ -57,8 +57,8 @@ A function to create a Gaussian Mixture Model based on the given latents
 @param args: The arguments for the model
 @return: The clustering model
 """
-def create_GMM_model(latents, args):
-    gmm = GaussianMixture(random_state=args.random_seed, n_components=args.num_segments)  # Specify the number of clusters
+def create_GMM_model(latents, args, clusters = 10):
+    gmm = GaussianMixture(random_state=args.random_seed, n_components=clusters)  # Specify the number of clusters
     gmm.fit(latents)
     return gmm
 

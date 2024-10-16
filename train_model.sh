@@ -6,15 +6,15 @@ learning_rate=0.001
 hidden_dim=256 #256
 latent_dim=32 #32
 latent_dist="gaussian"  # Or "concrete"
-batch_size=512
-num_segments=3
-demo_file="trajectories/colours/15k_layered"
-save_dir="runs/cnn_test_1_20ke_15k_config2"
+batch_size=128
+num_segments=5
+demo_file="trajectories/treasure/10000_30"
+save_dir="runs/treasure/10k_20ke"
 random_seed=42
 train_model=true
 state_dim=3
-action_dim=4
-max_steps=12
+action_dim=5
+max_steps=30
 
 # Run the train.py script with the provided arguments
 python3 train.py \
