@@ -186,32 +186,36 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     total_correct_boundaries = 0
 
     for true_boundaries, predicted_boundaries in zip(true_boundaries_list, predicted_boundaries_list):
-        true_boundaries = np.array(true_boundaries)
-        predicted_boundaries = np.array(predicted_boundaries)
+        try:
+            true_boundaries = np.array(true_boundaries)
+            predicted_boundaries = np.array(predicted_boundaries)
 
-        # Calculate MSE for this particular datapoint
-        mse = np.mean((true_boundaries - predicted_boundaries) ** 2)
-        mse_list.append(mse)
+            # Calculate MSE for this particular datapoint
+            print(true_boundaries, predicted_boundaries)
+            mse = np.mean((true_boundaries - predicted_boundaries) ** 2)
+            mse_list.append(mse)
 
-        # Calculate L2 distance for this particular datapoint
-        l2_distance = np.sqrt(np.sum((true_boundaries - predicted_boundaries) ** 2))
-        l2_distance_list.append(l2_distance)
+            # Calculate L2 distance for this particular datapoint
+            l2_distance = np.sqrt(np.sum((true_boundaries - predicted_boundaries) ** 2))
+            l2_distance_list.append(l2_distance)
 
-        # Calculate True Positives, False Positives, False Negatives
-        for pred in predicted_boundaries:
-            if any(np.abs(true_boundaries - pred) <= tolerance):
-                total_true_positives += 1
-            else:
-                total_false_positives += 1
-        
-        for true in true_boundaries:
-            if not any(np.abs(predicted_boundaries - true) <= tolerance):
-                total_false_negatives += 1
+            # Calculate True Positives, False Positives, False Negatives
+            for pred in predicted_boundaries:
+                if any(np.abs(true_boundaries - pred) <= tolerance):
+                    total_true_positives += 1
+                else:
+                    total_false_positives += 1
+            
+            for true in true_boundaries:
+                if not any(np.abs(predicted_boundaries - true) <= tolerance):
+                    total_false_negatives += 1
 
-        # Calculate correct boundaries for accuracy
-        correct_boundaries = np.sum(np.abs(true_boundaries - predicted_boundaries) <= tolerance)
-        total_correct_boundaries += correct_boundaries
-        total_boundaries += len(true_boundaries)
+            # Calculate correct boundaries for accuracy
+            correct_boundaries = np.sum(np.abs(true_boundaries - predicted_boundaries) <= tolerance)
+            total_correct_boundaries += correct_boundaries
+            total_boundaries += len(true_boundaries)
+        except:
+            pass
 
     # Overall MSE
     overall_mse = np.mean(mse_list)

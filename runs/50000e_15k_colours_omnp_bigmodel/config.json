@@ -1,0 +1,18 @@
+{
+    "iterations": 50000,
+    "learning_rate": 0.001,
+    "hidden_dim": 512,
+    "latent_dim": 64,
+    "latent_dist": "gaussian",
+    "batch_size": 512,
+    "num_segments": 3,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/15k_omnp",
+    "save_dir": "runs/50000e_15k_colours_omnp_bigmodel",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 11,
+    "action_dim": 5,
+    "max_steps": 12
+}

@@ -244,7 +244,8 @@ for i in range(len(test_data_states)):
     state_array = single_input[0].cpu().detach().numpy()[0]
     action_array = single_input[1].cpu().detach().numpy()[0]
 
-    state_array = get_simple_obs_list(state_array)
+    # Uncomment this if you want to use a 5x5 obs
+    # state_array = get_simple_obs_list(state_array)
 
     #Get a list of the true colour objectives at each time step and the true boundaries
     true_colours_each_timestep = determine_objectives(state_array)

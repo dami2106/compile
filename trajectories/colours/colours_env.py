@@ -247,6 +247,57 @@ def get_simple_obs(obs):
 
     return state
 
+def run_episode_ompn(env, goals = [2, 3, 4]):
+    obs = env.reset()
+    shuffle(goals) #Randomise order of colours 
+    done = False 
+    length = 0
+
+    states = []
+    actions = []
+
+    for goal in goals:
+        path = find_shortest_path(obs, goal)
+
+        for action in path: 
+            nextobs, _, done, _ = env.step(action)
+            states.append(get_simple_obs(obs.copy()))
+            actions.append(action)
+            obs = nextobs.copy()
+            length += 1
+    
+    states.append(get_simple_obs(obs.copy()))
+    actions.append(4)
+    length += 1
+
+    return states, actions, length, done
+        
+
+def save_colours_demo_omnp(nb_traces = 15000, max_steps = 12):
+    env = ColorsEnv('colours')
+    state_dim = 11
+
+    data_states = np.zeros([nb_traces, max_steps, state_dim], dtype='float32')
+    data_actions = np.zeros([nb_traces, max_steps], dtype='long')
+
+    tn = 0
+    while tn < nb_traces:
+        try:
+            states, actions, length, done = run_episode_ompn(env)
+            if length == max_steps and done:
+                for i in range(length):
+                    data_states[tn][i] = states[i]
+                    data_actions[tn][i] = actions[i]
+                tn += 1
+        except:
+            pass
+    
+    size = str(nb_traces).replace('0', '')
+
+    np.save(f'trajectories/colours/{size}k_omnp_states', data_states)
+    np.save(f'trajectories/colours/{size}k_omnp_actions', data_actions)
+
+
 
 def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
@@ -338,5 +389,6 @@ if __name__ == '__main__':
 
     # print(done)
 
-    save_colours_demonstrations(15000, 12)
+    # save_colours_demonstrations(15000, 12)
+    save_colours_demo_omnp(15000, 12)
    
