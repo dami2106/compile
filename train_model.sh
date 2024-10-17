@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Variables
-iterations=20000
+iterations=50000
 learning_rate=0.001
 hidden_dim=256 #256
 latent_dim=32 #32
 latent_dist="gaussian"  # Or "concrete"
-batch_size=128
-num_segments=5
-demo_file="trajectories/treasure/10000_30"
-save_dir="runs/treasure/10k_20ke"
+batch_size=512
+num_segments=3
+demo_file="trajectories/colours/15k_layered"
+save_dir="runs/colours/cnn_15k_50ke"
 random_seed=42
 train_model=true
 state_dim=3
-action_dim=5
-max_steps=30
+action_dim=4
+max_steps=12
 
 # Run the train.py script with the provided arguments
 python3 train.py \

@@ -26,9 +26,9 @@ class TestILE(nn.Module):
 
         # -------------
 
-        self.in_channels = 12
-        self.out_channels = 64
-        self.kernel_size = 3
+        self.in_channels = 4
+        self.out_channels = 16 
+        self.kernel_size = 2
         self.stride = 1
 
 
@@ -36,7 +36,7 @@ class TestILE(nn.Module):
         self.conv_layer = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size= self.kernel_size, stride=self.stride, padding=1), 
 
-            nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
+            # nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
 
             nn.ReLU(),
             
@@ -44,7 +44,8 @@ class TestILE(nn.Module):
         )
 
         
-        self.out_layer_size = self.out_channels * self.state_dim[1] * self.state_dim[2]
+        # self.out_layer_size = self.out_channels * self.state_dim[1] * self.state_dim[2]
+        self.out_layer_size = 576
 
         self.state_embedding = nn.Sequential(
             nn.Linear(self.out_layer_size, hidden_dim),
@@ -77,7 +78,7 @@ class TestILE(nn.Module):
         self.state_embedding_decoder = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size= self.kernel_size, stride=self.stride, padding=1), 
 
-            nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
+            # nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
 
             nn.ReLU(),
             
@@ -96,10 +97,14 @@ class TestILE(nn.Module):
         inputs_reshaped = inputs[0].view(-1, c, h, w)  #Combine the batch size and time steps
 
 
+
         conv_out = self.conv_layer(inputs_reshaped)  # Pass through the conv + flatten layer 
+
+    
 
         reshaped_conv_out = conv_out.view(batch_size, timesteps, self.out_layer_size) #Add the batch size and timesteps back
 
+ 
 
         state_embedding = self.state_embedding(reshaped_conv_out)  # Get the embedding of the conv output
         action_embedding = self.action_embedding(inputs[1]) 
