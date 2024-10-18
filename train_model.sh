@@ -3,13 +3,13 @@
 # Variables
 iterations=50000
 learning_rate=0.001
-hidden_dim=256 #256
-latent_dim=32 #32
+hidden_dim=512 #256
+latent_dim=64 #32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered"
-save_dir="runs/colours/cnn_15k_50ke"
+save_dir="runs/colours/cnn_15k_50ke_big1"
 random_seed=42
 train_model=true
 state_dim=3

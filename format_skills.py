@@ -375,3 +375,16 @@ def get_simple_obs_list_from_layers(obs_list):
         s_obs = np.array(obs).reshape(4, 5, 5)
         new_obs_list.append(layered_to_vector(s_obs))
     return new_obs_list
+
+
+"""
+A function to get the boundaries of the treasure segments in the state set
+@param state_set: The states of the trace
+@return: A list of the boundaries of the colour segments
+"""
+def get_boundaries_treasure(ground_truth):
+    boundaries = []
+    for i in range(1, len(ground_truth)):
+        if ground_truth[i] != ground_truth[i-1]:
+            boundaries.append(i)
+    return [0] + boundaries + [len(ground_truth) - 1]
