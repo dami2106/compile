@@ -26,9 +26,9 @@ class TestILE(nn.Module):
 
         # -------------
 
-        self.in_channels = 4
-        self.out_channels = 16 
-        self.kernel_size = 2
+        self.in_channels = state_dim[0]
+        self.out_channels = 64 
+        self.kernel_size = 3
         self.stride = 1
 
 
@@ -36,7 +36,7 @@ class TestILE(nn.Module):
         self.conv_layer = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size= self.kernel_size, stride=self.stride, padding=1), 
 
-            # nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
+            nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
 
             nn.ReLU(),
             
@@ -44,8 +44,8 @@ class TestILE(nn.Module):
         )
 
         
-        # self.out_layer_size = self.out_channels * self.state_dim[1] * self.state_dim[2]
-        self.out_layer_size = 576
+        self.out_layer_size = self.out_channels * self.state_dim[1] * self.state_dim[2]
+        # self.out_layer_size = 576 #1936 treasure, 576 for colours
 
         self.state_embedding = nn.Sequential(
             nn.Linear(self.out_layer_size, hidden_dim),
@@ -78,7 +78,7 @@ class TestILE(nn.Module):
         self.state_embedding_decoder = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.out_channels, kernel_size= self.kernel_size, stride=self.stride, padding=1), 
 
-            # nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
+            nn.Conv2d(in_channels=self.out_channels, out_channels=self.out_channels, kernel_size=self.kernel_size, padding=1),
 
             nn.ReLU(),
             

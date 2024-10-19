@@ -1,0 +1,18 @@
+{
+    "iterations": 50000,
+    "learning_rate": 0.001,
+    "hidden_dim": 256,
+    "latent_dim": 32,
+    "latent_dist": "gaussian",
+    "batch_size": 512,
+    "num_segments": 3,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/15k_layered",
+    "save_dir": "runs/colours/cnn_15k_50ke_original",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 3,
+    "action_dim": 4,
+    "max_steps": 12
+}

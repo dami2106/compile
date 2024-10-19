@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # Variables
-iterations=50000
+iterations=20000
+domain="colours"
 learning_rate=0.001
-hidden_dim=512 #256
-latent_dim=64 #32
+hidden_dim=256 #256
+latent_dim=32 #32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered"
-save_dir="runs/colours/cnn_15k_50ke_big1"
+save_dir="runs/colours/cnn_15k_20ke_ogp"
 random_seed=42
 train_model=true
 state_dim=3
@@ -17,7 +18,7 @@ action_dim=4
 max_steps=12
 
 # Run the train.py script with the provided arguments
-python3 train.py \
+python3 train_$domain.py \
     --iterations $iterations \
     --learning-rate $learning_rate \
     --hidden-dim $hidden_dim \

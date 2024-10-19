@@ -20,14 +20,14 @@ import test_modules
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=1000,
+parser.add_argument('--iterations', type=int, default=10,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=12,
+parser.add_argument('--latent-dim', type=int, default=32,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
@@ -41,9 +41,9 @@ parser.add_argument('--num-segments', type=int, default=3,
 parser.add_argument('--log-interval', type=int, default=1,
                     help='Logging interval.')
 
-parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
+parser.add_argument('--demo-file', type=str, default='trajectories/treasure/1500_30',
                     help='path to the expert trajectories file')
-parser.add_argument('--save-dir', type=str, default='',
+parser.add_argument('--save-dir', type=str, default='runs/treasure/temp',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
@@ -242,18 +242,18 @@ for i in range(len(test_data_states)):
     if len(set(predicted_boundaries)) < args.num_segments + 1:
         continue
 
-    #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-    state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
-    action_array = single_input[1].cpu().detach().numpy()[0]
+    # #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
+    # state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
+    # action_array = single_input[1].cpu().detach().numpy()[0]
 
    
 
 
-    #Get a list of the true colour objectives at each time step and the true boundaries
-    true_colours_each_timestep = determine_objectives(state_array)
-    true_boundaries = get_boundaries(state_array)
-    all_predicted_boundaries.append(predicted_boundaries)
-    all_true_boundaries.append(true_boundaries)
+    # #Get a list of the true colour objectives at each time step and the true boundaries
+    # true_colours_each_timestep = determine_objectives(state_array)
+    # true_boundaries = get_boundaries(state_array)
+    # all_predicted_boundaries.append(predicted_boundaries)
+    # all_true_boundaries.append(true_boundaries)
 
 
     #Segment the states, actions, and colour objectives based on the predicted boundaries

@@ -100,8 +100,9 @@ model = test_modules.TestILE(
     latent_dist=args.latent_dist,
     device=device).to(device)
 
-parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], []) # test here
-# parameter_list = list(model.parameters()) 
+# parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], []) # test here
+parameter_list = list(model.parameters())  # test here
+
 
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
@@ -110,8 +111,6 @@ data_states = np.load(data_path + '_states.npy', allow_pickle=True) #Shzpe is 10
 data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
  
 
-# Add for Compile Domain
-# data_states = np.transpose(data_states, (0, 1, 4, 2, 3))
 
 print(data_states.shape)
 print(data_actions.shape)
