@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Variables
-iterations=20000
+iterations=100
 domain="colours"
-learning_rate=0.001
-hidden_dim=256 #256
-latent_dim=32 #32
+learning_rate=0.0001
+hidden_dim=128 #256
+latent_dim=16 #32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
@@ -15,7 +15,7 @@ random_seed=42
 train_model=true
 action_dim=4
 max_steps=12
-out_channels=64
+out_channels=8
 kernel=3
 stride=1
 
@@ -37,3 +37,10 @@ python3 train_$domain.py \
     --kernel $kernel \
     --stride $stride \
     $( [[ "$train_model" == true ]] && echo "--train-model" ) \
+
+
+# Error with config: python3 train_colours.py --iterations 100 
+# --learning-rate 0.0001 --hidden-dim 128 --latent-dim 16
+#  --latent-dist gaussian --batch-size 512 --num-segments 3 
+#  --demo-file trajectories/colours/15k_layered --save-dir tune/colours/run_0 
+#  --random-seed 42 --action-dim 4 --max-steps 12 --out-channels 8 --kernel 2 --train-model

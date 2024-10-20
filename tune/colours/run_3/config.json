@@ -7,13 +7,13 @@
     "batch_size": 512,
     "num_segments": 3,
     "demo_file": "trajectories/colours/15k_layered",
-    "save_dir": "tune/colours/run_0",
+    "save_dir": "tune/colours/run_3",
     "random_seed": 42,
     "results_file": null,
     "train_model": true,
     "action_dim": 4,
     "max_steps": 12,
-    "out_channels": 8,
-    "kernel": 2,
+    "out_channels": 16,
+    "kernel": 3,
     "stride": 1
 }
