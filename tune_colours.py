@@ -16,18 +16,11 @@ latent_dist = "gaussian"
 output_file = "tune/hyperparameter_sweep_results.csv"
 
 # Hyperparameters to sweep
-# learning_rates = [ 1e-4, 1e-3 ]
-# hidden_dims = [ 128, 256, 512 ]
-# latent_dims = [ 16, 32, 64, 128 ]
-# iterations = [ 100, 1000, 5000, 10000, 50000 ]
-# out_channels = [ 8, 16, 32, 64 ]
-# kernels = [ 3 ]
-
-learning_rates = [ 1e-4 ]
-hidden_dims = [ 128 ]
-latent_dims = [ 16 ]
-iterations = [ 2, 3 ]
-out_channels = [ 8 ]
+learning_rates = [ 1e-4, 1e-3 ]
+hidden_dims = [ 128, 256, 512 ]
+latent_dims = [ 16, 32, 64, 128 ]
+iterations = [ 100, 1000, 5000, 10000, 50000 ]
+out_channels = [ 8, 16, 32, 64 ]
 kernels = [ 3 ]
 
 
