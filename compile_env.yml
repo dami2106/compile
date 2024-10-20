@@ -1,0 +1,4 @@
+name: compile
+channels:
+  - defaults
+prefix: /home/nightless/anaconda3/envs/compile

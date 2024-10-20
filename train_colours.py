@@ -27,7 +27,7 @@ parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
 parser.add_argument('--hidden-dim', type=int, default=256,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=12,
+parser.add_argument('--latent-dim', type=int, default=32,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
@@ -38,13 +38,11 @@ parser.add_argument('--num-segments', type=int, default=3,
                     help='Number of segments in data generation.')
 
 
-parser.add_argument('--log-interval', type=int, default=1,
-                    help='Logging interval.')
-
 parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
                     help='path to the expert trajectories file')
 parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and config are saved')
+
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
@@ -52,13 +50,17 @@ parser.add_argument('--results-file', type=str, default=None,
 parser.add_argument('--train-model', action='store_true', 
                     help='Flag to indicate whether to train the model.')
 
-parser.add_argument('--state-dim', type=int, default=11,
-                    help='Size of the state dimension')
+
 parser.add_argument('--action-dim', type=int, default=5,
                     help='Size of the action dimension')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-
+parser.add_argument('--out-channels', type=int, default=64,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--kernel', type=int, default=3,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--stride', type=int, default=1,
+                    help='maximum number of steps in an expert trajectory')
 
 args = parser.parse_args()
 
@@ -97,6 +99,9 @@ model = test_modules.TestILE(
     hidden_dim=args.hidden_dim,
     latent_dim=args.latent_dim,
     max_num_segments=args.num_segments,
+    out_channels=args.out_channels,
+    kernel_size=args.kernel,
+    stride=1,
     latent_dist=args.latent_dist,
     device=device).to(device)
 
@@ -112,8 +117,8 @@ data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
  
 
 
-print(data_states.shape)
-print(data_actions.shape)
+# print(data_states.shape)
+# print(data_actions.shape)
 
 
 train_test_split = np.random.permutation(len(data_states))
@@ -139,7 +144,7 @@ batch_loss = 0
 batch_acc = 0
 
 if args.train_model:
-    print('Training model with ', device)
+    # print('Training model with ', device)
     writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -162,53 +167,42 @@ if args.train_model:
         optimizer.step()
         
 
-        if step % args.log_interval == 0:
-            # Run evaluation.
-            model.eval()
-            outputs = model.forward(test_inputs, test_lengths)
-            acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+        # Run evaluation.
+        model.eval()
+        outputs = model.forward(test_inputs, test_lengths)
+        acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
 
-            # Accumulate metrics.
-            batch_acc = acc.item()
-            batch_loss = nll.item()
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
-                step, batch_loss, batch_acc))
-            
-            # Log to TensorBoard
-            writer.add_scalar('Loss/nll_train', batch_loss, step)
-            writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+        # Accumulate metrics.
+        batch_acc = acc.item()
+        batch_loss = nll.item()
+        # print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+        
+        # Log to TensorBoard
+        writer.add_scalar('Loss/nll_train', batch_loss, step)
+        writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
 
         
         step += 1
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
-    if args.results_file:
-        with open(args.results_file, 'a') as f:
-            f.write(' '.join(sys.argv))
-            f.write('\n')
-            f.write(' ')
-            f.write(str(batch_acc))
-            f.write(' ')
-            f.write(str(model.K))
-            f.write('\n')
+
 else:
-    print("Loading Model")
+    # print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    print("Model Loaded")
+    # print("Model Loaded")
 
 
-print("Evaluating Model")
+# print("Evaluating Model")
 model.eval()
 
 
 try:
-    print("Loading GMM Model")
     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    print("GMM Model Loaded")
+    # print("GMM Model Loaded")
 except:
+    # print("Training Cluster Model")
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    print("Training Cluster Model")
     gmm_model = create_GMM_model(train_latents, args, 3)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
@@ -291,28 +285,29 @@ for i in range(len(test_data_states)):
     
     
 
-    print_skills_against_truth(state_array, state_segments, clusters_gmm)
+    # print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
-print("\n=============================================")
-print("Segmentation Metrics:")
+# print("\n=============================================")
+# print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-print(f"Overall MSE: {overall_mse}")
-print(f"Overall L2 Distance: {overall_l2_distance}")
-print(f"Accuracy: {accuracy}")
-print(f"Precision: {precision}")
-print(f"Recall: {recall}")
-print(f"F1 Score: {f1_score}")
+# print(f"Overall MSE: {overall_mse}")
+# print(f"Overall L2 Distance: {overall_l2_distance}")
+# print(f"Accuracy: {accuracy}")
+# print(f"Precision: {precision}")
+# print(f"Recall: {recall}")
+# print(f"F1 Score: {f1_score}")
 
 
-print("=============================================")
-print("Skill Accuracy:")
+# print("=============================================")
+# print("Skill Accuracy:")
 # print(f"GMM: {skill_acc_gmm}")
-for acc in skill_acc_gmm:
-    print(f"{acc}")
-print()
+# for acc in skill_acc_gmm:
+#     print(f"{acc}")
+
+print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
 
 

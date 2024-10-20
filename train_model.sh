@@ -10,12 +10,14 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered"
-save_dir="runs/colours/cnn_15k_20ke_ogp"
+save_dir="runs/colours/test"
 random_seed=42
 train_model=true
-state_dim=3
 action_dim=4
 max_steps=12
+out_channels=64
+kernel=3
+stride=1
 
 # Run the train.py script with the provided arguments
 python3 train_$domain.py \
@@ -29,7 +31,9 @@ python3 train_$domain.py \
     --demo-file $demo_file \
     --save-dir $save_dir \
     --random-seed $random_seed \
-    --state-dim $state_dim \
     --action-dim $action_dim \
     --max-steps $max_steps \
+    --out-channels $out_channels \
+    --kernel $kernel \
+    --stride $stride \
     $( [[ "$train_model" == true ]] && echo "--train-model" ) \

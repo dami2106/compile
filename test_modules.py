@@ -10,6 +10,7 @@ import utils
 class TestILE(nn.Module):
 
     def __init__(self, state_dim, action_dim, hidden_dim, latent_dim, max_num_segments,
+                 out_channels, kernel_size, stride,
                  temp_b=1., temp_z=1., latent_dist='gaussian', device='cuda'):
         super(TestILE, self).__init__()
 
@@ -27,9 +28,9 @@ class TestILE(nn.Module):
         # -------------
 
         self.in_channels = state_dim[0]
-        self.out_channels = 64 
-        self.kernel_size = 3
-        self.stride = 1
+        self.out_channels = out_channels 
+        self.kernel_size = kernel_size
+        self.stride = stride
 
 
 
