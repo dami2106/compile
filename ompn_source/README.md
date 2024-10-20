@@ -68,3 +68,13 @@ Visualize the learned expanding position by
 python scripts/analysis.py --model_ckpt PATH_TO_PKL \
         --envs makebedfull-v0 --use_demo --episodes 20
 ```
+
+
+# Env List
+['getwood-v0'
+'getwoodfull-v0'
+'getgrass-v0'
+ 'getgrassfull-v0'
+  'getiron-v0'
+   'getironfull-v0',
+   'makeplank-v0', 'makeplankfull-v0', 'makestick-v0', 'makestickfull-v0', 'makecloth-v0', 'makeclothfull-v0', 'makerope-v0', 'makeropefull-v0', 'makebridge-v0', 'makebridgefull-v0', 'makebed-v0', 'makebedfull-v0', 'makeaxe-v0', 'makeaxefull-v0', 'makeshears-v0', 'makeshearsfull-v0', 'getgold-v0', 'getgoldfull-v0', 'getgem-v0', 'getgemfull-v0']

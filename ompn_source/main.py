@@ -19,7 +19,7 @@ from taco import train_taco
 from compile import train_compile
 
 FLAGS = flags.FLAGS
-flags.DEFINE_list('envs', default=['makebedfull-v0'], help='List of env to train. Use comma spearated')
+flags.DEFINE_list('envs', default=['getwood-v0'], help='List of env to train. Use comma spearated')
 flags.DEFINE_list('test_envs', default=[], help='Extra test envs')
 flags.DEFINE_integer('max_steps', default=64, help='maximum environment steps')
 flags.DEFINE_integer('width', default=10, help='width of env')
