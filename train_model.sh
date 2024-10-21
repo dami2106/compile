@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-iterations=50000
+iterations=3
 learning_rate=0.001
 hidden_dim=512
 latent_dim=64
@@ -9,12 +9,15 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_omnp"
-save_dir="runs/50000e_15k_colours_omnp_bigmodel"
+save_dir="runs/test"
 random_seed=42
 train_model=true
 state_dim=11
 action_dim=5
 max_steps=12
+beta_b=0.1
+beta_z=0.1
+prior_rate=3.0
 
 # Run the train.py script with the provided arguments
 python3 train.py \
@@ -31,4 +34,7 @@ python3 train.py \
     --state-dim $state_dim \
     --action-dim $action_dim \
     --max-steps $max_steps \
+    --beta-b $beta_b \
+    --beta-z $beta_z \
+    --prior-rate $prior_rate \
     $( [[ "$train_model" == true ]] && echo "--train-model" ) \

@@ -17,11 +17,6 @@ from format_skills import determine_objectives, predict_clusters, create_KM_mode
         get_skill_accuracy, generate_elbow_plot, get_simple_obs_list
 
 
-import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn.manifold import TSNE
-from sklearn.preprocessing import LabelEncoder
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -63,6 +58,12 @@ parser.add_argument('--action-dim', type=int, default=5,
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
 
+parser.add_argument('--beta-b', type=float, default=0.1,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--beta-z', type=float, default=0.1,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--prior-rate', type=float, default=3.0,
+                    help='maximum number of steps in an expert trajectory')
 
 args = parser.parse_args()
 
@@ -79,7 +80,7 @@ if args.train_model:
     with open(os.path.join(run_dir, "config.json"), "w") as f:
         f.write(json.dumps(vars(args), indent=4))
 else:
-    print("Loaded Config File")
+    # print("Loaded Config File")
     config_file_path = os.path.join(run_dir, "config.json")
     with open(config_file_path, "r") as f:
         config = json.load(f)
@@ -137,7 +138,7 @@ best_rec_acc = 0
 best_nll = np.inf
 
 if args.train_model:
-    print('Training model with ', device)
+    # print('Training model with ', device)
     writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -151,7 +152,7 @@ if args.train_model:
         # Run forward pass.
         model.train()
         outputs = model.forward(inputs, lengths)
-        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args, beta_b=args.beta_b, beta_z=args.beta_z, prior_rate=args.prior_rate)
 
         loss.backward()
         optimizer.step()
@@ -165,8 +166,7 @@ if args.train_model:
             # Accumulate metrics.
             batch_acc = acc.item()
             batch_loss = nll.item()
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(
-                step, batch_loss, batch_acc))
+            # print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
             if batch_acc > best_rec_acc and batch_loss < best_nll:
                 best_rec_acc = batch_acc
                 best_nll = batch_loss
@@ -181,8 +181,8 @@ if args.train_model:
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
-    print("Best Reconstruction Accuracy: ", best_rec_acc)
-    print("Best NLL: ", best_nll)
+    # print("Best Reconstruction Accuracy: ", best_rec_acc)
+    # print("Best NLL: ", best_nll)
     if args.results_file:
         with open(args.results_file, 'a') as f:
             f.write(' '.join(sys.argv))
@@ -193,23 +193,23 @@ if args.train_model:
             f.write(str(model.K))
             f.write('\n')
 else:
-    print("Loading Model")
+    # print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    print("Model Loaded")
+    # print("Model Loaded")
 
 
-print("Evaluating Model")
+# print("Evaluating Model")
 model.eval()
 
 
 # Try load in the clustering model if it exists
 try:
-    print("Loading GMM Model")
+    # print("Loading GMM Model")
     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    print("GMM Model Loaded")
+    # print("GMM Model Loaded")
 except:
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    print("Training Cluster Model")
+    # print("Training Cluster Model")
     gmm_model = create_GMM_model(train_latents, args, 3)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
@@ -294,38 +294,29 @@ for i in range(len(test_data_states)):
 
 
 
-# train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-# n_components, aic, bic = generate_elbow_plot(train_latents, args)
-# plt.figure(figsize=(8, 6))
-# plt.plot(n_components, aic, label='AIC', marker='o')
-# plt.plot(n_components, bic, label='BIC', marker='o')
-# plt.xlabel('Number of Components')
-# plt.ylabel('AIC / BIC')
-# plt.title('Elbow Method for GMM - AIC and BIC')
-# plt.legend()
-# plt.grid(True)
-# plt.savefig(os.path.join(run_dir, 'elbow_plot.png'))
-
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
-print("\n=============================================")
-print("Segmentation Metrics:")
+# print("\n=============================================")
+# print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-print(f"Overall MSE: {overall_mse}")
-print(f"Overall L2 Distance: {overall_l2_distance}")
-print(f"Accuracy: {accuracy}")
-print(f"Precision: {precision}")
-print(f"Recall: {recall}")
-print(f"F1 Score: {f1_score}")
+# print(f"Overall MSE: {overall_mse}")
+# print(f"Overall L2 Distance: {overall_l2_distance}")
+# print(f"Accuracy: {accuracy}")
+# print(f"Precision: {precision}")
+# print(f"Recall: {recall}")
+# print(f"F1 Score: {f1_score}")
 
 
-print("=============================================")
-print("Skill Accuracy:")
-# print(f"GMM: {skill_acc_gmm}")
-for acc in skill_acc_gmm:
-    print(f"{acc}")
-print()
+# print("=============================================")
+# print("Skill Accuracy:")
+# # print(f"GMM: {skill_acc_gmm}")
+# for acc in skill_acc_gmm:
+#     print(f"{acc}")
+# print()
 
 
+#  seg_acc, skill_acc, l2_dist
+
+print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 

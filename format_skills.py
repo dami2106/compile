@@ -191,7 +191,7 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
             predicted_boundaries = np.array(predicted_boundaries)
 
             # Calculate MSE for this particular datapoint
-            print(true_boundaries, predicted_boundaries)
+            # print(true_boundaries, predicted_boundaries)
             mse = np.mean((true_boundaries - predicted_boundaries) ** 2)
             mse_list.append(mse)
 

@@ -20,7 +20,7 @@ class CompILE(nn.Module):
             Gumbel softmax latents ('concrete').
     """
     def __init__(self, state_dim, action_dim, hidden_dim, latent_dim, max_num_segments,
-                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cpu'):
+                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cuda'):
         super(CompILE, self).__init__()
 
         self.state_dim = state_dim
