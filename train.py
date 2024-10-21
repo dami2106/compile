@@ -17,11 +17,11 @@ from format_skills import determine_objectives, predict_clusters, create_KM_mode
         get_skill_accuracy, generate_elbow_plot, get_simple_obs_list
 
 
-import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn.manifold import TSNE
-from sklearn.preprocessing import LabelEncoder
+# import matplotlib.pyplot as plt
+# from sklearn.decomposition import PCA
+# from mpl_toolkits.mplot3d import Axes3D
+# from sklearn.manifold import TSNE
+# from sklearn.preprocessing import LabelEncoder
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -306,7 +306,7 @@ for i in range(len(test_data_states)):
 # plt.grid(True)
 # plt.savefig(os.path.join(run_dir, 'elbow_plot.png'))
 
-
+print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
 print("\n=============================================")

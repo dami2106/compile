@@ -56,6 +56,7 @@ class CompILE(nn.Module):
         self.head_b_2 = nn.Linear(hidden_dim, 1)
 
         # Decoder MLP.
+        # Decoder p(a | s,  z)
         self.state_embedding_decoder = nn.Sequential(
             # nn.Linear(state_dim, hidden_dim),
             # nn.ReLU(),

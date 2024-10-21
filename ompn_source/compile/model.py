@@ -114,7 +114,9 @@ class CompILE(nn.Module):
         # encoder
         self.obs_enc = nn.Linear(vec_size, hidden_size)
         self.action_emb = nn.Embedding(action_size, hidden_size)
+
         self.env_emb = get_env_encoder(env_arch, hidden_size)
+        
         self.input_encoder = nn.Sequential(
             nn.Linear(3 * hidden_size, hidden_size),
             nn.ReLU(),
