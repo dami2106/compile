@@ -2,7 +2,7 @@
 
 
 trajectory="trajectories/colours/15k"
-model_dir="runs/1000e_15k_colours"
+model_dir="runs/test3"
 
 # Run the train.py script with the provided arguments
 python3 train.py \

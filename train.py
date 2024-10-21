@@ -107,9 +107,9 @@ model = modules.CompILE(
 
 
 
-parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], [])
+# parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], [])
 
-optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
 data_states = np.load(data_path + '_states.npy', allow_pickle=True)
 data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
@@ -151,8 +151,8 @@ if args.train_model:
         # Run forward pass.
         model.train()
         outputs = model.forward(inputs, lengths)
+  
         loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
-
         loss.backward()
         optimizer.step()
 
@@ -294,19 +294,8 @@ for i in range(len(test_data_states)):
 
 
 
-# train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-# n_components, aic, bic = generate_elbow_plot(train_latents, args)
-# plt.figure(figsize=(8, 6))
-# plt.plot(n_components, aic, label='AIC', marker='o')
-# plt.plot(n_components, bic, label='BIC', marker='o')
-# plt.xlabel('Number of Components')
-# plt.ylabel('AIC / BIC')
-# plt.title('Elbow Method for GMM - AIC and BIC')
-# plt.legend()
-# plt.grid(True)
-# plt.savefig(os.path.join(run_dir, 'elbow_plot.png'))
 
-print_skills_against_truth(state_array, state_segments, clusters_gmm)
+    print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
 print("\n=============================================")

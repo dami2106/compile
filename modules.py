@@ -35,12 +35,21 @@ class CompILE(nn.Module):
         self.K = latent_dim
 
         self.action_embedding = nn.Embedding(action_dim, hidden_dim)
-        self.state_embedding = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
+        self.state_embedding = nn.Linear(state_dim, hidden_dim)
+
+        # self.state_embedding = nn.Sequential(
+        #     nn.Linear(state_dim, hidden_dim),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim, hidden_dim),
+        # )
+
+        self.input_encoder = nn.Sequential(
+            nn.Linear(2*hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim, elementwise_affine=False),
         )
-        self.lstm_cell = nn.LSTMCell(2*hidden_dim, hidden_dim)
+
+        self.lstm_cell = nn.LSTMCell(hidden_dim, hidden_dim) #Changes
 
         # LSTM output heads.
         self.head_z_1 = nn.Linear(hidden_dim, hidden_dim)
@@ -58,24 +67,23 @@ class CompILE(nn.Module):
         # Decoder MLP.
         # Decoder p(a | s,  z)
         self.state_embedding_decoder = nn.Sequential(
-            # nn.Linear(state_dim, hidden_dim),
-            # nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
+            nn.Linear(hidden_dim + latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
         )
-        self.subpolicies = [nn.Sequential(
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
-            nn.Linear(state_dim, action_dim),
-            nn.Softmax(dim=-1),
-        ).to(device) for i in range(latent_dim)]
+        # self.subpolicies = [nn.Sequential(
+        #     # nn.Linear(hidden_dim, hidden_dim),
+        #     # nn.ReLU(),
+        #     nn.Linear(state_dim, action_dim),
+        #     nn.Softmax(dim=-1),
+        # ).to(device) for i in range(latent_dim)]
 
     def embed_input(self, inputs):
         state_embedding = self.state_embedding(inputs[0])
         action_embedding = self.action_embedding(inputs[1])
 
         embedding = torch.cat([state_embedding, action_embedding], dim=-1)
-        return embedding
+        return self.input_encoder(embedding)
 
     def masked_encode(self, inputs, mask):
         """Run masked RNN encoder on input sequence."""
@@ -142,11 +150,27 @@ class CompILE(nn.Module):
         return logits_z, sample_z
 
     def decode(self, sample_z, states):
-        """Decode single time step from latents and repeat over full seq."""
-        embed = self.state_embedding_decoder(states)
-        subpolicies = torch.cat([subpolicy(embed).unsqueeze(-1) for subpolicy in self.subpolicies], dim=-1)
-        pred = (subpolicies * sample_z.unsqueeze(1).unsqueeze(1)).sum(dim=-1)
-        return pred
+        # print(sample_z.shape) #torch.Size([512, 32])
+        # print(inputs[0].shape) #torch.Size([512, 12, 11])
+        # state_emb shape is torch.Size([512, 12, 256])
+
+
+        # """Decode single time step from latents and repeat over full seq."""
+        # embed = self.state_embedding_decoder(states)
+        # subpolicies = torch.cat([subpolicy(embed).unsqueeze(-1) for subpolicy in self.subpolicies], dim=-1)
+        # pred = (subpolicies * sample_z.unsqueeze(1).unsqueeze(1)).sum(dim=-1)
+        # return pred
+        state_embedding = self.state_embedding(states)
+        sample_z_re = sample_z[:, None, :].repeat(1, state_embedding.shape[1], 1)
+
+        comb_input = torch.cat([state_embedding, sample_z_re], dim=-1)
+
+        # comb_input = torch.cat([state_embedding, sample_z[:, None, :].repeat(1, state_embedding.shape[1], 1)], dim=-1)
+        return self.state_embedding_decoder(comb_input)
+      
+
+
+            
 
     def get_next_masks(self, all_b_samples):
         """Get RNN hidden state masks for next segment."""
@@ -195,6 +219,9 @@ class CompILE(nn.Module):
             mask = self.get_next_masks(all_b['samples'])
             all_masks.append(mask)
 
+            # print(sample_z.shape) #torch.Size([512, 32])
+            # print(inputs[0].shape) #torch.Size([512, 12, 11])
+
             # Decode current segment from latents (z).
             reconstructions = self.decode(sample_z, inputs[0])
             all_recs.append(reconstructions)
@@ -203,15 +230,15 @@ class CompILE(nn.Module):
 
     def save(self, path):
         checkpoint = {'model': self.state_dict()}
-        for i, subpolicy in enumerate(self.subpolicies):
-            checkpoint[f"subpolicy-{i}"] = subpolicy.state_dict()
+        # for i, subpolicy in enumerate(self.subpolicies):
+        #     checkpoint[f"subpolicy-{i}"] = subpolicy.state_dict()
         torch.save(checkpoint, path)
 
     def load(self, path):
         checkpoint = torch.load(path, weights_only=True)
         self.load_state_dict(checkpoint['model'])
-        for i, subpolicy in enumerate(self.subpolicies):
-            subpolicy.load_state_dict(checkpoint[f"subpolicy-{i}"])
+        # for i, subpolicy in enumerate(self.subpolicies):
+        #     subpolicy.load_state_dict(checkpoint[f"subpolicy-{i}"])
 
     def play_from_observation(self, option, obs):
         with torch.no_grad():
