@@ -616,7 +616,7 @@ if __name__ == '__main__' :
     state[1] is ground truth
     """
 
-    save_demonstrations(5000, 30)
+    save_demonstrations(15000, 30)
 
     # trace_length = 20
     # num_traces = 10
