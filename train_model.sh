@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Variables
-iterations=3
+iterations=50000
 learning_rate=0.001
-hidden_dim=512
-latent_dim=64
+hidden_dim=256
+latent_dim=32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
-demo_file="trajectories/colours/15k_omnp"
-save_dir="runs/test"
+demo_file="trajectories/colours/15k"
+save_dir="runs/sanity_check"
 random_seed=42
 train_model=true
 state_dim=11

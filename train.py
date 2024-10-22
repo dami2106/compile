@@ -40,7 +40,7 @@ parser.add_argument('--num-segments', type=int, default=3,
 parser.add_argument('--log-interval', type=int, default=1,
                     help='Logging interval.')
 
-parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
+parser.add_argument('--demo-file', type=str, default='trajectories/colours/15k',
                     help='path to the expert trajectories file')
 parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and config are saved')
@@ -138,7 +138,7 @@ best_rec_acc = 0
 best_nll = np.inf
 
 if args.train_model:
-    # print('Training model with ', device)
+    print('Training model with ', device)
     writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -166,7 +166,7 @@ if args.train_model:
             # Accumulate metrics.
             batch_acc = acc.item()
             batch_loss = nll.item()
-            # print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
             if batch_acc > best_rec_acc and batch_loss < best_nll:
                 best_rec_acc = batch_acc
                 best_nll = batch_loss
@@ -181,8 +181,8 @@ if args.train_model:
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
-    # print("Best Reconstruction Accuracy: ", best_rec_acc)
-    # print("Best NLL: ", best_nll)
+    print("Best Reconstruction Accuracy: ", best_rec_acc)
+    print("Best NLL: ", best_nll)
     if args.results_file:
         with open(args.results_file, 'a') as f:
             f.write(' '.join(sys.argv))
@@ -193,9 +193,9 @@ if args.train_model:
             f.write(str(model.K))
             f.write('\n')
 else:
-    # print("Loading Model")
+    print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    # print("Model Loaded")
+    print("Model Loaded")
 
 
 # print("Evaluating Model")
@@ -206,10 +206,10 @@ model.eval()
 try:
     # print("Loading GMM Model")
     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    # print("GMM Model Loaded")
+    print("GMM Model Loaded")
 except:
+    print("Training Cluster Model")
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    # print("Training Cluster Model")
     gmm_model = create_GMM_model(train_latents, args, 3)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
@@ -297,26 +297,26 @@ for i in range(len(test_data_states)):
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
-# print("\n=============================================")
-# print("Segmentation Metrics:")
+print("\n=============================================")
+print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-# print(f"Overall MSE: {overall_mse}")
-# print(f"Overall L2 Distance: {overall_l2_distance}")
-# print(f"Accuracy: {accuracy}")
-# print(f"Precision: {precision}")
-# print(f"Recall: {recall}")
-# print(f"F1 Score: {f1_score}")
+print(f"Overall MSE: {overall_mse}")
+print(f"Overall L2 Distance: {overall_l2_distance}")
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1_score}")
 
 
-# print("=============================================")
-# print("Skill Accuracy:")
-# # print(f"GMM: {skill_acc_gmm}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
-# print()
+print("=============================================")
+print("Skill Accuracy:")
+# print(f"GMM: {skill_acc_gmm}")
+for acc in skill_acc_gmm:
+    print(f"{acc}")
+print()
 
 
 #  seg_acc, skill_acc, l2_dist
 
-print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
+# print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
