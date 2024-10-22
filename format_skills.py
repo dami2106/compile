@@ -254,15 +254,36 @@ def get_skill_dict(states, segments, clusters):
     return skill_dict
 
 
+def get_skill_dict_treasure(truth, predicted_boundaries, clusters): 
+    skills = []
+    for i in range(0, len(predicted_boundaries) - 1):
+        cluster_len = (predicted_boundaries[i+1] - predicted_boundaries[i])
+        if predicted_boundaries[i] == 0 :
+            cluster_len += 1
+        for _ in range(cluster_len):
+            skills.append(clusters[i])
+
+    new_truth = [str(x) for x in truth]
+
+    skill_dict = {
+        "Prediction" : skills,
+        "Truth" : new_truth
+    }
+
+
+    return skill_dict
+
+
 #Takes in a list of dataframes
-def get_skill_accuracy(skill_dict_list):
+def get_skill_accuracy(skill_dict_list, cluster_num = 10):
     df_new_all = pd.concat(skill_dict_list)
-    # Define the possible labels in predictions and truth values
-    prediction_labels = ['A', 'B', 'C']
-    truth_labels = ['red', 'green', 'blue']
+ 
+    # truth_labels = ['red', 'green', 'blue']
+    truth_labels = [str(x) for x in range(cluster_num)]
+    prediction_labels = [chr(65 + x) for x in range(cluster_num)]
 
     # Generate all permutations of truth labels
-    permutations = list(itertools.permutations(truth_labels))
+    permutations = list(itertools.permutations(prediction_labels, 5))
 
     # Calculate total number of predictions
     new_total_predictions = len(df_new_all)
@@ -273,7 +294,7 @@ def get_skill_accuracy(skill_dict_list):
     # Iterate over each permutation, create the mapping, and calculate accuracy
     for perm in permutations:
         # Create the mapping for this permutation
-        label_mapping_perm = dict(zip(prediction_labels, perm))
+        label_mapping_perm = dict(zip(perm, truth_labels))
         
         # Apply the mapping to predictions
         df_new_all['Mapped_Prediction'] = df_new_all['Prediction'].map(label_mapping_perm)
@@ -292,7 +313,6 @@ def get_skill_accuracy(skill_dict_list):
 
     # Output the sorted results
     return sorted_accuracy_results
-
 
 
 def layered_to_vector(state):
@@ -386,5 +406,5 @@ def get_boundaries_treasure(ground_truth):
     boundaries = []
     for i in range(1, len(ground_truth)):
         if ground_truth[i] != ground_truth[i-1]:
-            boundaries.append(i)
+            boundaries.append(i - 1)
     return [0] + boundaries + [len(ground_truth) - 1]

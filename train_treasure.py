@@ -14,7 +14,7 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers
+          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, get_boundaries_treasure, get_skill_dict_treasure
 
 import test_modules
 
@@ -59,6 +59,13 @@ parser.add_argument('--action-dim', type=int, default=5,
 parser.add_argument('--max-steps', type=int, default=30,
                     help='maximum number of steps in an expert trajectory')
 
+parser.add_argument('--out-channels', type=int, default=64,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--kernel', type=int, default=3,
+                    help='maximum number of steps in an expert trajectory')
+parser.add_argument('--stride', type=int, default=1,
+                    help='maximum number of steps in an expert trajectory')
+
 
 args = parser.parse_args()
 
@@ -97,6 +104,9 @@ model = test_modules.TestILE(
     hidden_dim=args.hidden_dim,
     latent_dim=args.latent_dim,
     max_num_segments=args.num_segments,
+    out_channels=args.out_channels,
+    kernel_size=args.kernel,
+    stride=args.stride,
     latent_dist=args.latent_dist,
     device=device).to(device)
 
@@ -207,13 +217,12 @@ model.eval()
 
 
 try:
-    print("Loading GMM Model")
     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
     print("GMM Model Loaded")
 except:
-    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
     print("Training Cluster Model")
-    gmm_model = create_GMM_model(train_latents, args, 3)
+    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+    gmm_model = create_GMM_model(train_latents, args, 10)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
 
@@ -222,8 +231,8 @@ all_true_boundaries = []
 all_predicted_boundaries = []
 dict_list_gmm = []
 
-for i in range(len(test_data_states)):
 
+for i in range(len(test_data_states)):
     #Get a single datapoint from the test states
     single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
     single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
@@ -237,65 +246,64 @@ for i in range(len(test_data_states)):
 
     #Sort the predicted boundaries in ascending order (smallest to largest)
     predicted_boundaries = sorted(predicted_boundaries)
+    true_boundaries = get_boundaries_treasure(test_truth_states[i])
+    
 
-    #Skip incorrect segment predictions (when there is a boundary repeated)
-    if len(set(predicted_boundaries)) < args.num_segments + 1:
-        continue
+    if (len(predicted_boundaries) == args.num_segments + 1) and (len(true_boundaries) == args.num_segments + 1):
+
+        all_predicted_boundaries.append(predicted_boundaries)
+        all_true_boundaries.append(true_boundaries)
+    
 
     # #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-    # state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
-    # action_array = single_input[1].cpu().detach().numpy()[0]
-
-   
+    state_array = single_input[0].cpu().detach().numpy()[0]
+    action_array = single_input[1].cpu().detach().numpy()[0]
 
 
-    # #Get a list of the true colour objectives at each time step and the true boundaries
-    # true_colours_each_timestep = determine_objectives(state_array)
-    # true_boundaries = get_boundaries(state_array)
-    # all_predicted_boundaries.append(predicted_boundaries)
-    # all_true_boundaries.append(true_boundaries)
+    # if len(set(predicted_boundaries)) != len(predicted_boundaries):
+    #     pass
 
-
-    #Segment the states, actions, and colour objectives based on the predicted boundaries
-    #Also save the segment indices
+    # Segment the states, actions, and colour objectives based on the predicted boundaries
+    # Also save the segment indices
     state_segments = []
     action_segments = []
     colour_objective_segments = []
     segment_indices = []
-    for i in range(args.num_segments):
-        start_idx = int(predicted_boundaries[i])
-        end_idx = int(predicted_boundaries[i + 1]) 
+    for j in range(args.num_segments):
+        start_idx = int(predicted_boundaries[j])
+        end_idx = int(predicted_boundaries[j + 1]) 
         end_idx = end_idx if end_idx < len(state_array) - 1 else len(state_array) 
 
         state_segments.append(state_array[start_idx:end_idx])
         action_segments.append(action_array[start_idx:end_idx])
-        colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
 
-    #Get the predicted clusters for each segment
+#     #Get the predicted clusters for each segment
     clusters_gmm = predict_clusters(gmm_model, test_latents)
-    
+
+    # print(true_boundaries)
 
     try:
-        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        skill_dictionary = get_skill_dict_treasure(test_truth_states[i], predicted_boundaries, clusters_gmm)
         dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
     except:
         print("Failed to get skill dictionary")
-        print(state_array)
-        print("----------------")
-        print(state_segments)
-        print("----------------")
-        print(clusters_gmm)
-        print("----------------")
-        print(predicted_boundaries)
-        print("----------------")
-        print(true_boundaries)
-        print("----------------")
+    # break
+#         print(state_array)
+#         print("----------------")
+#         print(state_segments)
+#         print("----------------")
+#         print(clusters_gmm)
+#         print("----------------")
+#         print(predicted_boundaries)
+#         print("----------------")
+#         print(true_boundaries)
+#         print("----------------")
     
     
 
-    print_skills_against_truth(state_array, state_segments, clusters_gmm)
+#     print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 
 
@@ -316,6 +324,7 @@ print("Skill Accuracy:")
 # print(f"GMM: {skill_acc_gmm}")
 for acc in skill_acc_gmm:
     print(f"{acc}")
+    break
 print()
 
 

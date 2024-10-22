@@ -1,0 +1,21 @@
+{
+    "iterations": 50000,
+    "learning_rate": 0.001,
+    "hidden_dim": 256,
+    "latent_dim": 32,
+    "latent_dist": "gaussian",
+    "batch_size": 128,
+    "num_segments": 5,
+    "log_interval": 1,
+    "demo_file": "trajectories/treasure/10000_30",
+    "save_dir": "runs/treasure/10k_50ke_new",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 3,
+    "action_dim": 5,
+    "max_steps": 30,
+    "out_channels" : 64,
+    "kernel" : 3,
+    "stride" : 1
+}

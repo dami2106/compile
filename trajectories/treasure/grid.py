@@ -568,7 +568,14 @@ def run_episode(seed = 0):
     return all_states, all_actions, truth, done, len(all_states)
 
 
-def save_demonstrations(num_demos = 1000, trace_length = 20):
+def get_boundaries_treasure(ground_truth):
+    boundaries = []
+    for i in range(1, len(ground_truth)):
+        if ground_truth[i] != ground_truth[i-1]:
+            boundaries.append(i - 1)
+    return [0] + boundaries + [len(ground_truth) - 1]
+
+def save_demonstrations(num_demos = 1000, trace_length = 30, segments = 5):
     all_states = []
     all_actions = []
     all_truth = []
@@ -576,9 +583,9 @@ def save_demonstrations(num_demos = 1000, trace_length = 20):
     tn = 0
     while tn < num_demos:
         states, actions, truth, done, length = run_episode(np.random.randint(100000))
-        print(done, length)
+        bounds = get_boundaries_treasure(truth)
 
-        if done and trace_length == length:
+        if done and trace_length == length and len(bounds) == segments + 1:
             all_states.append(states)
             all_actions.append(actions)
             all_truth.append(truth)
@@ -589,9 +596,11 @@ def save_demonstrations(num_demos = 1000, trace_length = 20):
     all_actions = np.array(all_actions)
     all_truth = np.array(all_truth)
 
-    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_states.npy', all_states)
-    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_actions.npy', all_actions)
-    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_truth.npy', all_truth)
+
+
+    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_{segments}_states.npy', all_states)
+    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_{segments}_actions.npy', all_actions)
+    np.save(f'trajectories/treasure/{num_demos}_{trace_length}_{segments}_truth.npy', all_truth)
 
 
 
@@ -607,7 +616,7 @@ if __name__ == '__main__' :
     state[1] is ground truth
     """
 
-    save_demonstrations(1500, 30)
+    save_demonstrations(5000, 30)
 
     # trace_length = 20
     # num_traces = 10
