@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Variables
-iterations=3000
+iterations=50000
 domain="treasure"
-learning_rate=0.001
+learning_rate=0.0001
 hidden_dim=256 #256
 latent_dim=32 #32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=256
 num_segments=5
-demo_file="trajectories/treasure/1500_30_5"
-save_dir="runs/treasure/1500_5_3ke"
+demo_file="trajectories/treasure/15000_30_5"
+save_dir="runs/treasure/15000_5_50ke"
 random_seed=42
 train_model=true
 action_dim=5
