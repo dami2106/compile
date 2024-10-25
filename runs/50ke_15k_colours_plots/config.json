@@ -1,5 +1,5 @@
 {
-    "iterations": 100,
+    "iterations": 50000,
     "learning_rate": 0.001,
     "hidden_dim": 256,
     "latent_dim": 32,
@@ -8,7 +8,7 @@
     "num_segments": 3,
     "log_interval": 1,
     "demo_file": "trajectories/colours/15k",
-    "save_dir": "runs/test",
+    "save_dir": "runs/50ke_15k_colours_plots",
     "random_seed": 42,
     "results_file": null,
     "train_model": true,

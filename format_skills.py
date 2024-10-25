@@ -4,6 +4,11 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.mixture import GaussianMixture
 import pandas as pd
 import itertools
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+import os 
+
 
 """
 TODO SIMPLIFY THE FUNCTION
@@ -18,7 +23,7 @@ Creates a numpy array from the latents where each latent is a new row
 """
 def get_latents(states, actions, model, args, device = 'cuda'):
     all_latents = []
-
+    model.eval()
     for i in range(len(states)):
         # Choose a single test input
         single_test_input = states[i:i + 1]  # Select the first trajectory for testing
@@ -238,6 +243,30 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     return overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score
 
 
+
+def PCA_cluster_plot(clusters, latents, title = "PCA Cluster Plot", directory = ""):
+    pca = PCA(n_components=3, random_state=42)
+    latents_3d = pca.fit_transform(latents)
+
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+
+    label_encoder = LabelEncoder()
+    numeric_clusters = label_encoder.fit_transform(clusters)
+
+    # Plot the 3D scatter with numeric clusters
+    scatter = ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], 
+                        c=numeric_clusters, cmap='viridis', s=50)
+        
+    ax.set_title(title)
+    ax.set_xlabel('PCA Component 1')
+    ax.set_ylabel('PCA Component 2')
+    ax.set_zlabel('PCA Component 3')
+
+    # Adding color bar to show the different clusters
+    plt.colorbar(scatter, ax=ax, label='Cluster Labels')
+
+    plt.savefig(os.path.join(directory, title + '.png'))
 
 #TODO FIX THIS
 def skills_each_timestep(segments, clusters):

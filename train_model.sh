@@ -9,7 +9,7 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k"
-save_dir="runs/sanity_check"
+save_dir="runs/50ke_15k_colours_plots_2"
 random_seed=42
 train_model=true
 state_dim=11
@@ -20,7 +20,7 @@ beta_z=0.1
 prior_rate=3.0
 
 # Run the train.py script with the provided arguments
-python3 train.py \
+python3 train_vis_clusters.py \
     --iterations $iterations \
     --learning-rate $learning_rate \
     --hidden-dim $hidden_dim \

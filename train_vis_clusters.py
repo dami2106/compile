@@ -14,7 +14,7 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-        get_skill_accuracy, generate_elbow_plot, get_simple_obs_list
+        get_skill_accuracy, generate_elbow_plot, get_simple_obs_list, PCA_cluster_plot
 
 
 
@@ -130,6 +130,8 @@ test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_acti
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
 
+
+
 step = 0
 rec = None
 batch_loss = 0
@@ -157,24 +159,69 @@ if args.train_model:
         loss.backward()
         optimizer.step()
 
-        if step % args.log_interval == 0:
-            # Run evaluation.
-            model.eval()
-            outputs = model.forward(test_inputs, test_lengths)
-            acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
 
-            # Accumulate metrics.
-            batch_acc = acc.item()
-            batch_loss = nll.item()
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
-            if batch_acc > best_rec_acc and batch_loss < best_nll:
-                best_rec_acc = batch_acc
-                best_nll = batch_loss
-                model.save(os.path.join(run_dir, 'best_checkpoint.pth'))
+        model.eval()
+        outputs = model.forward(test_inputs, test_lengths)
+        acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+
+        # Accumulate metrics.
+        batch_acc = acc.item()
+        batch_loss = nll.item()
+        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+        if batch_acc > best_rec_acc and batch_loss < best_nll:
+            best_rec_acc = batch_acc
+            best_nll = batch_loss
+            model.save(os.path.join(run_dir, 'best_checkpoint.pth'))
+        
+        # Log to TensorBoard
+        writer.add_scalar('Loss/nll_train', batch_loss, step)
+        writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+
+        if step % 1000 == 0:
             
-            # Log to TensorBoard
-            writer.add_scalar('Loss/nll_train', batch_loss, step)
-            writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+            print("Plotting")
+
+            train_latents = get_latents(train_data_states, train_action_states, model, args, device)
+            gmm_model = create_GMM_model(train_latents, args, 3)
+            torch.save(gmm_model, os.path.join(run_dir, f'gmm_model_{step}.pth'))
+
+            lats = []
+            true_clusters_list = []
+            predict_clusters_list = []
+
+            for i in range(len(test_data_states)):
+                
+                single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
+                single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
+
+                #Do a forward pass through the model using the single input point
+                _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
+
+                #Get the predicted boundaries and the latents for each segment
+                test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
+                lats += test_latents
+
+                predicted_clusters = predict_clusters(gmm_model, test_latents)
+                predict_clusters_list += predicted_clusters
+
+                state_array = single_input[0].cpu().detach().numpy()[0]
+                true_clusters = determine_objectives(state_array)
+
+                true_clusters =list(dict.fromkeys(true_clusters))
+
+                true_clusters_list += true_clusters
+
+            
+            lats = np.array(lats)
+            true_clusters_list = np.array(true_clusters_list)
+            predict_clusters_list = np.array(predict_clusters_list)
+
+            PCA_cluster_plot(predict_clusters_list, lats, f"Predicted Clusters {step}e", run_dir)
+            PCA_cluster_plot(true_clusters_list, lats, f"True Clusters {step}e", run_dir)
+
+
+                    
+
 
         
         step += 1
@@ -200,18 +247,6 @@ else:
 
 # print("Evaluating Model")
 model.eval()
-
-
-# Try load in the clustering model if it exists
-try:
-    # print("Loading GMM Model")
-    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    print("GMM Model Loaded")
-except:
-    print("Training Cluster Model")
-    train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    gmm_model = create_GMM_model(train_latents, args, 3)
-    torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
 
 
