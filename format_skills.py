@@ -4,6 +4,10 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.mixture import GaussianMixture
 import pandas as pd
 import itertools
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+import os 
 
 """
 TODO SIMPLIFY THE FUNCTION
@@ -345,6 +349,29 @@ def layered_to_vector(state):
     return state
     
 
+def PCA_cluster_plot(clusters, latents, title = "PCA Cluster Plot", directory = ""):
+    pca = PCA(n_components=3, random_state=42)
+    latents_3d = pca.fit_transform(latents)
+
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+
+    label_encoder = LabelEncoder()
+    numeric_clusters = label_encoder.fit_transform(clusters)
+
+    # Plot the 3D scatter with numeric clusters
+    scatter = ax.scatter(latents_3d[:, 0], latents_3d[:, 1], latents_3d[:, 2], 
+                        c=numeric_clusters, cmap='viridis', s=50)
+        
+    ax.set_title(title)
+    ax.set_xlabel('PCA Component 1')
+    ax.set_ylabel('PCA Component 2')
+    ax.set_zlabel('PCA Component 3')
+
+    # Adding color bar to show the different clusters
+    plt.colorbar(scatter, ax=ax, label='Cluster Labels')
+
+    plt.savefig(os.path.join(directory, title + '.png'))
 
 def get_coords(obs, search):
     pos = np.where(obs == search)   
