@@ -20,7 +20,7 @@ import test_modules
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=1000,
+parser.add_argument('--iterations', type=int, default=100,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
@@ -38,16 +38,16 @@ parser.add_argument('--num-segments', type=int, default=3,
                     help='Number of segments in data generation.')
 
 
-parser.add_argument('--demo-file', type=str, default='trajectories/colours/5k',
+parser.add_argument('--demo-file', type=str, default='trajectories/colours/15k_layered',
                     help='path to the expert trajectories file')
-parser.add_argument('--save-dir', type=str, default='',
+parser.add_argument('--save-dir', type=str, default='runs/treasure/testing',
                     help='directory where model and config are saved')
 
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
 parser.add_argument('--results-file', type=str, default=None,
                     help='file where results are saved')
-parser.add_argument('--train-model', action='store_true', 
+parser.add_argument('--train-model', action='store_true', default=True,
                     help='Flag to indicate whether to train the model.')
 
 
@@ -55,7 +55,7 @@ parser.add_argument('--action-dim', type=int, default=5,
                     help='Size of the action dimension')
 parser.add_argument('--max-steps', type=int, default=12,
                     help='maximum number of steps in an expert trajectory')
-parser.add_argument('--out-channels', type=int, default=64,
+parser.add_argument('--out-channels', type=int, default=8,
                     help='maximum number of steps in an expert trajectory')
 parser.add_argument('--kernel', type=int, default=3,
                     help='maximum number of steps in an expert trajectory')
@@ -117,8 +117,8 @@ data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
  
 
 
-# print(data_states.shape)
-# print(data_actions.shape)
+print(data_states.shape)
+print(data_actions.shape)
 
 
 train_test_split = np.random.permutation(len(data_states))
@@ -154,7 +154,7 @@ if args.train_model:
         batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
         lengths = torch.tensor([max_steps] * args.batch_size).to(device)
         inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
-
+        print("ds")
   
         # Run forward pass.
         model.train()
@@ -175,7 +175,7 @@ if args.train_model:
         # Accumulate metrics.
         batch_acc = acc.item()
         batch_loss = nll.item()
-        # print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
         
         # Log to TensorBoard
         # writer.add_scalar('Loss/nll_train', batch_loss, step)
