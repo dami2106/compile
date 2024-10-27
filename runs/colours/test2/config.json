@@ -7,7 +7,7 @@
     "batch_size": 256,
     "num_segments": 3,
     "demo_file": "trajectories/colours/15k_layered",
-    "save_dir": "runs/colours/test",
+    "save_dir": "runs/colours/test2",
     "random_seed": 42,
     "results_file": null,
     "train_model": true,

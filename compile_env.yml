@@ -1,4 +1,4 @@
-name: compile2
+name: compile
 channels:
   - defaults
   - https://repo.anaconda.com/pkgs/main
@@ -71,4 +71,4 @@ dependencies:
       - torch==2.5.0
       - typing-extensions==4.12.2
       - tzdata==2024.2
-prefix: /home/dami/anaconda3/envs/compile2
+prefix: /home/dami/anaconda3/envs/compile

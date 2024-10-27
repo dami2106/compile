@@ -18,6 +18,8 @@ from format_skills import determine_objectives, predict_clusters, create_KM_mode
 
 import test_modules
 
+import pickle
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=100,
@@ -144,7 +146,7 @@ batch_loss = 0
 batch_acc = 0
 
 if args.train_model:
-    # print('Training model with ', device)
+    print('Training model with ', device)
     # writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -154,8 +156,7 @@ if args.train_model:
         batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
         lengths = torch.tensor([max_steps] * args.batch_size).to(device)
         inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
-        print("ds")
-  
+
         # Run forward pass.
         model.train()
         outputs = model.forward(inputs, lengths)
@@ -177,7 +178,7 @@ if args.train_model:
         batch_loss = nll.item()
         print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
         
-        # Log to TensorBoard
+        # # Log to TensorBoard
         # writer.add_scalar('Loss/nll_train', batch_loss, step)
         # writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
 
@@ -187,7 +188,8 @@ if args.train_model:
 
             train_latents = get_latents(train_data_states, train_action_states, model, args, device)
             gmm_model = create_GMM_model(train_latents, args, 3)
-            torch.save(gmm_model, os.path.join(run_dir, f'gmm_model_{step}.pth'))
+            with open(os.path.join(run_dir, f'gmm_model_{step}.pkl'), 'wb') as f:
+                pickle.dump(gmm_model, f)
 
             lats = []
             true_clusters_list = []
@@ -208,10 +210,10 @@ if args.train_model:
                 predicted_clusters = predict_clusters(gmm_model, test_latents)
                 predict_clusters_list += predicted_clusters
 
-                state_array = single_input[0].cpu().detach().numpy()[0]
+                state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
                 true_clusters = determine_objectives(state_array)
 
-                true_clusters =list(dict.fromkeys(true_clusters))
+                true_clusters = list(dict.fromkeys(true_clusters))
 
                 true_clusters_list += true_clusters
 
@@ -220,6 +222,9 @@ if args.train_model:
             true_clusters_list = np.array(true_clusters_list)
             predict_clusters_list = np.array(predict_clusters_list)
 
+            print(true_clusters_list)
+            print(predict_clusters_list)
+ 
             PCA_cluster_plot(predict_clusters_list, lats, f"Predicted Clusters {step}e", run_dir)
             PCA_cluster_plot(true_clusters_list, lats, f"True Clusters {step}e", run_dir)
 
@@ -233,9 +238,9 @@ if args.train_model:
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
 
 else:
-    # print("Loading Model")
+    print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    # print("Model Loaded")
+    print("Model Loaded")
 
 
 # print("Evaluating Model")
@@ -243,13 +248,15 @@ model.eval()
 
 
 try:
-    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    # print("GMM Model Loaded")
+    with open(os.path.join(run_dir, f'gmm_model.pkl'), 'rb') as f:
+        gmm_model = pickle.load(f)
+    print("GMM Model Loaded")
 except:
-    # print("Training Cluster Model")
+    print("Training Cluster Model")
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
     gmm_model = create_GMM_model(train_latents, args, 3)
-    torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
+    with open(os.path.join(run_dir, f'gmm_model.pkl'), 'wb') as f:
+        pickle.dump(gmm_model, f)
 
 
 
@@ -273,7 +280,7 @@ for i in range(len(test_data_states)):
     #Sort the predicted boundaries in ascending order (smallest to largest)
     predicted_boundaries = sorted(predicted_boundaries)
 
-    #Skip incorrect segment predictions (when there is a boundary repeated)
+    # #Skip incorrect segment predictions (when there is a boundary repeated)
     if len(set(predicted_boundaries)) < args.num_segments + 1:
         continue
 
@@ -281,7 +288,6 @@ for i in range(len(test_data_states)):
     state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
     action_array = single_input[1].cpu().detach().numpy()[0]
 
-   
 
 
     #Get a list of the true colour objectives at each time step and the true boundaries
@@ -297,9 +303,9 @@ for i in range(len(test_data_states)):
     action_segments = []
     colour_objective_segments = []
     segment_indices = []
-    for i in range(args.num_segments):
-        start_idx = int(predicted_boundaries[i])
-        end_idx = int(predicted_boundaries[i + 1]) 
+    for j in range(args.num_segments):
+        start_idx = int(predicted_boundaries[j])
+        end_idx = int(predicted_boundaries[j + 1]) 
         end_idx = end_idx if end_idx < len(state_array) - 1 else len(state_array) 
 
         state_segments.append(state_array[start_idx:end_idx])
@@ -314,45 +320,39 @@ for i in range(len(test_data_states)):
 
     try:
         skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        # print(skill_dictionary)
         dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
+
     except:
         print("Failed to get skill dictionary")
-        print(state_array)
-        print("----------------")
-        print(state_segments)
-        print("----------------")
-        print(clusters_gmm)
-        print("----------------")
-        print(predicted_boundaries)
-        print("----------------")
         print(true_boundaries)
-        print("----------------")
+        print(predicted_boundaries)
+        print()
+
     
-    
 
-    # print_skills_against_truth(state_array, state_segments, clusters_gmm)
-
+    print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
-# print("\n=============================================")
-# print("Segmentation Metrics:")
+skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
+print("\n=============================================")
+print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-# print(f"Overall MSE: {overall_mse}")
-# print(f"Overall L2 Distance: {overall_l2_distance}")
-# print(f"Accuracy: {accuracy}")
-# print(f"Precision: {precision}")
-# print(f"Recall: {recall}")
-# print(f"F1 Score: {f1_score}")
+print(f"Overall MSE: {overall_mse}")
+print(f"Overall L2 Distance: {overall_l2_distance}")
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1_score}")
 
 
-# print("=============================================")
-# print("Skill Accuracy:")
+print("=============================================")
+print("Skill Accuracy:")
 # print(f"GMM: {skill_acc_gmm}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
+for acc in skill_acc_gmm:
+    print(f"{acc}")
 
-print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
+# print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
 
 

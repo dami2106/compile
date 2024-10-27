@@ -279,21 +279,22 @@ def get_skill_dict_treasure(truth, predicted_boundaries, clusters):
 
 
 #Takes in a list of dataframes
-def get_skill_accuracy(skill_dict_list, cluster_num = 10):
+def get_skill_accuracy(skill_dict_list, cluster_num = 3):
     df_new_all = pd.concat(skill_dict_list)
  
-    # truth_labels = ['red', 'green', 'blue']
-    truth_labels = [str(x) for x in range(cluster_num)]
+    truth_labels = ['red', 'green', 'blue']
+    # truth_labels = [str(x) for x in range(cluster_num)]
     prediction_labels = [chr(65 + x) for x in range(cluster_num)]
 
     # Generate all permutations of truth labels
-    permutations = list(itertools.permutations(prediction_labels, 5))
+    permutations = list(itertools.permutations(prediction_labels, cluster_num))
 
     # Calculate total number of predictions
     new_total_predictions = len(df_new_all)
 
     # Create a dictionary to store accuracy for each permutation
     accuracy_results = {}
+
 
     # Iterate over each permutation, create the mapping, and calculate accuracy
     for perm in permutations:
@@ -305,6 +306,8 @@ def get_skill_accuracy(skill_dict_list, cluster_num = 10):
         
         # Count correct matches (where mapped predictions match the truth)
         correct_matches_perm = (df_new_all['Mapped_Prediction'] == df_new_all['Truth']).sum()
+
+
         
         # Calculate accuracy for this permutation
         accuracy_perm = correct_matches_perm / new_total_predictions
