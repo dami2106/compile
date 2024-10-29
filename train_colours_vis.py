@@ -182,7 +182,7 @@ if args.train_model:
         # writer.add_scalar('Loss/nll_train', batch_loss, step)
         # writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
 
-        if step % 100 == 0:
+        if step % 1000 == 0:
             
             print("Plotting")
 

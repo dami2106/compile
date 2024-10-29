@@ -4,16 +4,16 @@ export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
 ldconfig -p | grep cuda
 
 # Variables
-iterations=5000
+iterations=50000
 domain="colours"
 learning_rate=0.0001
-hidden_dim=128 #256
-latent_dim=64 #32
+hidden_dim=256 #256
+latent_dim=16 #32
 latent_dist="gaussian"  # Or "concrete"
-batch_size=256
+batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered"
-save_dir="runs/colours/15k_colours_5ke_plots_new_2"
+save_dir="runs/colours/15k_colours_50ke_plots"
 # save_dir="runs/colours/test2"
 random_seed=42
 train_model=true
@@ -43,3 +43,4 @@ python3 train_colours_vis.py \
     $( [[ "$train_model" == true ]] && echo "--train-model" ) \
 
 
+# 31	0.0001	128	32	5000	64	3	0.967626	0.411871	0.391249
