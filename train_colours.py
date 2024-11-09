@@ -285,29 +285,29 @@ for i in range(len(test_data_states)):
     
     
 
-    # print_skills_against_truth(state_array, state_segments, clusters_gmm)
+    print_skills_against_truth(state_array, state_segments, clusters_gmm)
 
 
 
 skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
-# print("\n=============================================")
-# print("Segmentation Metrics:")
+print("\n=============================================")
+print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-# print(f"Overall MSE: {overall_mse}")
-# print(f"Overall L2 Distance: {overall_l2_distance}")
-# print(f"Accuracy: {accuracy}")
-# print(f"Precision: {precision}")
-# print(f"Recall: {recall}")
-# print(f"F1 Score: {f1_score}")
+print(f"Overall MSE: {overall_mse}")
+print(f"Overall L2 Distance: {overall_l2_distance}")
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1_score}")
 
 
-# print("=============================================")
-# print("Skill Accuracy:")
-# print(f"GMM: {skill_acc_gmm}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
+print("=============================================")
+print("Skill Accuracy:")
+print(f"GMM: {skill_acc_gmm}")
+for acc in skill_acc_gmm:
+    print(f"{acc}")
 
-print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
+# print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
 
 

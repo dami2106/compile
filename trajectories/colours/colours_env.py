@@ -5,6 +5,7 @@ from random import randint, shuffle
 from PIL import Image
 from collections import deque
 
+
 class ColorsEnv(gym.Env):
     def __init__(self, env_name):
         super(ColorsEnv, self).__init__()
@@ -35,15 +36,40 @@ class ColorsEnv(gym.Env):
     def setup_world(self):
         self.WORLD = np.zeros((self.SIZE, self.SIZE))
     
-        coordinates = set()
-        while len(coordinates) < 4:
-            x = randint(*(0, self.SIZE - 1))
-            y = randint(*(0, self.SIZE - 1))
-            coordinates.add((x, y))
-        coordinates = list(coordinates)
+        coordinates = []
+
+
+        coordinates.append((0, 2))
+        coordinates.append((4, 4))
+        coordinates.append((2, 1))
+
+        #randomise the position of the colours
+        shuffle(coordinates)
+        coordinates.append((2, 3))
+        coordinates.reverse()
+
+
+
+        # while True:
+        #     x = randint(*(0, self.SIZE - 1))
+        #     y = randint(*(0, self.SIZE - 1))
+        #     if (x, y) not in coordinates:
+        #         coordinates.append((x, y))
+        #         break
+                
+
+        # while len(coordinates) < 4:
+        #     x = randint(*(0, self.SIZE - 1))
+        #     y = randint(*(0, self.SIZE - 1))
+        #     coordinates.add((x, y))
+        # coordinates = list(coordinates)
+        # coordinates.reverse()
+
+        # print("coords", coordinates)
 
         for i, coord in enumerate(coordinates):
             self.WORLD[coord[0], coord[1]] = i + 1
+
 
     def reset(self):
         self.setup_world()
@@ -331,14 +357,18 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_layered_states', data_states)
-    np.save(f'trajectories/colours/{size}k_layered_actions', data_actions)
+    np.save(f'trajectories/colours/{size}k_layered_static_rand_states', data_states)
+    np.save(f'trajectories/colours/{size}k_layered_static_rand_actions', data_actions)
 
 
 if __name__ == '__main__':
     env = ColorsEnv('colours')
-    # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
+    # # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
     
+    # obs = env.reset() 
+
+    # print(obs)
+
     # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
 
     # new_states, new_acts = add_in_pickup(ep_states, ep_actions)
@@ -371,5 +401,5 @@ if __name__ == '__main__':
     # print(new_obs[:,:,0])
 
 
-    save_colours_demonstrations(100, 12)
+    save_colours_demonstrations(15000, 12)
    
