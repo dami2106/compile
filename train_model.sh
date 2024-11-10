@@ -4,7 +4,7 @@ export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
 ldconfig -p | grep cuda
 
 # Variables
-iterations=5000
+iterations=50000
 domain="colours"
 learning_rate=0.0001
 hidden_dim=128 #256
@@ -13,7 +13,7 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/15k_layered_static_rand"
-save_dir="runs/colours/5ke_15k_colours_static_rand_2"
+save_dir="runs/colours/50ke_15k_colours_static_rand_1"
 # save_dir="runs/colours/test2"
 random_seed=45
 train_model=true

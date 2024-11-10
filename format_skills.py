@@ -438,3 +438,57 @@ def get_boundaries_treasure(ground_truth):
         if ground_truth[i] != ground_truth[i-1]:
             boundaries.append(i - 1)
     return [0] + boundaries + [len(ground_truth) - 1]
+
+
+#@TODO WRite comments
+
+def reverse_3d_obs(new_obs):
+    size = new_obs.shape[1]  # Assuming new_obs is of shape (4, size, size)
+    obs = np.zeros((size, size), dtype=np.uint8)
+
+    # Map objects from new_obs back into obs
+    for layer, value in enumerate([1, 2, 3, 4]):  # 1: agent, 2: red, 3: green, 4: blue
+        coords = np.argwhere(new_obs[layer] == 1)
+        if coords.size > 0:  # Check if there's a non-zero entry
+            x, y = coords[0]  # Get the coordinates (only one per layer)
+            obs[x, y] = value
+
+    return obs
+
+def classify_positions(color_coords):
+    # Sort colors by the row index of their coordinates
+    sorted_colors = sorted(color_coords.items(), key=lambda item: item[1][0])
+    
+    # Assign top, middle, and bottom based on sorted order
+    classifications = {
+        sorted_colors[0][0]: "top",
+        sorted_colors[1][0]: "middle",
+        sorted_colors[2][0]: "bottom"
+    }
+    
+    return classifications
+
+def analyze_pickups(flat_states):
+
+    positions = {
+        "red": np.argwhere(flat_states[0] == 2)[0],
+        "green": np.argwhere(flat_states[0] == 3)[0],
+        "blue": np.argwhere(flat_states[0] == 4)[0]
+    }
+
+    classifications = classify_positions(positions)
+
+    simple_states = []
+    for trace in flat_states:
+        simple_states.append(get_simple_obs(trace))
+
+    simple_states = np.array(simple_states)
+
+    objectives = determine_objectives(simple_states)
+
+    directions = []
+
+    for obj in objectives:
+        directions.append(classifications[obj])
+    
+    return directions

@@ -175,7 +175,7 @@ if args.train_model:
         # Accumulate metrics.
         batch_acc = acc.item()
         batch_loss = nll.item()
-        # print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
         
         # Log to TensorBoard
         writer.add_scalar('Loss/nll_train', batch_loss, step)
