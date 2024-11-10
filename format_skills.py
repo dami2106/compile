@@ -257,6 +257,23 @@ def get_skill_dict(states, segments, clusters):
     
     return skill_dict
 
+def get_directional_dict(states, segments, clusters):
+    truth = determine_objectives(states)
+    skills = skills_each_timestep(segments, clusters)
+
+    if len(truth) != len(skills):
+
+        # print(truth)
+        # print(skills)
+        raise ValueError("Length of truth and skills do not match")
+
+    skill_dict = {
+        "Prediction" : skills,
+        "Truth" : truth
+    }
+    
+    return skill_dict
+
 
 def get_skill_dict_treasure(truth, predicted_boundaries, clusters): 
     skills = []

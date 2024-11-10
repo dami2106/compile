@@ -233,7 +233,8 @@ for i in range(len(test_data_states)):
         continue
 
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-    state_array = get_simple_obs_list_from_layers(single_input[0].cpu().detach().numpy()[0])
+    single_raw_input = single_input[0].cpu().detach().numpy()[0]
+    state_array = get_simple_obs_list_from_layers(single_raw_input)
     action_array = single_input[1].cpu().detach().numpy()[0]
 
    
