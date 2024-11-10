@@ -303,7 +303,7 @@ print(f"F1 Score: {f1_score}")
 
 print("=============================================")
 print("Skill Accuracy:")
-print(f"GMM: {skill_acc_gmm}")
+# print(f"GMM: {skill_acc_gmm}")
 for acc in skill_acc_gmm:
     print(f"{acc}")
 

@@ -45,18 +45,19 @@ class ColorsEnv(gym.Env):
 
         #randomise the position of the colours
         shuffle(coordinates)
-        coordinates.append((2, 3))
+        # coordinates.append((2, 3))
+
+
+
+        while True:
+            x = randint(*(0, self.SIZE - 1))
+            y = randint(*(0, self.SIZE - 1))
+            if (x, y) not in coordinates:
+                coordinates.append((x, y))
+                break
+        
         coordinates.reverse()
 
-
-
-        # while True:
-        #     x = randint(*(0, self.SIZE - 1))
-        #     y = randint(*(0, self.SIZE - 1))
-        #     if (x, y) not in coordinates:
-        #         coordinates.append((x, y))
-        #         break
-                
 
         # while len(coordinates) < 4:
         #     x = randint(*(0, self.SIZE - 1))
@@ -357,8 +358,8 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_layered_static_rand_states', data_states)
-    np.save(f'trajectories/colours/{size}k_layered_static_rand_actions', data_actions)
+    np.save(f'trajectories/colours/{size}k_layered_static_rand_ra_states', data_states)
+    np.save(f'trajectories/colours/{size}k_layered_static_rand_ra_actions', data_actions)
 
 
 if __name__ == '__main__':
