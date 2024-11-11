@@ -14,7 +14,7 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers
+          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups, get_directional_dict
 
 import test_modules
 
@@ -234,6 +234,8 @@ for i in range(len(test_data_states)):
 
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
     single_raw_input = single_input[0].cpu().detach().numpy()[0]
+
+
     state_array = get_simple_obs_list_from_layers(single_raw_input)
     action_array = single_input[1].cpu().detach().numpy()[0]
 
@@ -245,6 +247,7 @@ for i in range(len(test_data_states)):
     true_boundaries = get_boundaries(state_array)
     all_predicted_boundaries.append(predicted_boundaries)
     all_true_boundaries.append(true_boundaries)
+    true_directions_each_timestamp = analyze_pickups(single_raw_input)
 
 
     #Segment the states, actions, and colour objectives based on the predicted boundaries
@@ -269,7 +272,8 @@ for i in range(len(test_data_states)):
     
 
     try:
-        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        # skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
+        skill_dictionary = get_directional_dict(true_directions_each_timestamp, state_segments, clusters_gmm)
         dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
     except:
         print("Failed to get skill dictionary")

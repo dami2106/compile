@@ -257,11 +257,11 @@ def get_skill_dict(states, segments, clusters):
     
     return skill_dict
 
-def get_directional_dict(states, segments, clusters):
-    truth = determine_objectives(states)
+def get_directional_dict(directional_truth, segments, clusters):
+    # truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
 
-    if len(truth) != len(skills):
+    if len(directional_truth) != len(skills):
 
         # print(truth)
         # print(skills)
@@ -269,7 +269,7 @@ def get_directional_dict(states, segments, clusters):
 
     skill_dict = {
         "Prediction" : skills,
-        "Truth" : truth
+        "Truth" : directional_truth
     }
     
     return skill_dict
@@ -299,7 +299,8 @@ def get_skill_dict_treasure(truth, predicted_boundaries, clusters):
 def get_skill_accuracy(skill_dict_list, cluster_num = 3):
     df_new_all = pd.concat(skill_dict_list)
  
-    truth_labels = ['red', 'green', 'blue']
+    # truth_labels = ['red', 'green', 'blue']
+    truth_labels = ['bottom', 'top', 'middle']
     # truth_labels = [str(x) for x in range(cluster_num)]
     prediction_labels = [chr(65 + x) for x in range(cluster_num)]
 
@@ -485,7 +486,8 @@ def classify_positions(color_coords):
     
     return classifications
 
-def analyze_pickups(flat_states):
+def analyze_pickups(layered_states):
+    flat_states = np.array([reverse_3d_obs(obs) for obs in layered_states])
 
     positions = {
         "red": np.argwhere(flat_states[0] == 2)[0],
