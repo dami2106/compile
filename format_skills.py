@@ -257,6 +257,15 @@ def get_skill_dict(states, segments, clusters):
     
     return skill_dict
 
+
+def print_directions_against_truth(directional_truth, segments, clusters):
+    # truth = determine_objectives(states)
+    skills = skills_each_timestep(segments, clusters)
+
+    print("Prediction | Truth")
+    for s, t in zip(skills, directional_truth):
+        print(f"{s:<8} {t}")
+
 def get_directional_dict(directional_truth, segments, clusters):
     # truth = determine_objectives(states)
     skills = skills_each_timestep(segments, clusters)
@@ -296,11 +305,14 @@ def get_skill_dict_treasure(truth, predicted_boundaries, clusters):
 
 
 #Takes in a list of dataframes
-def get_skill_accuracy(skill_dict_list, cluster_num = 3):
+def get_skill_accuracy(skill_dict_list, cluster_num = 3, type = "direction"):
     df_new_all = pd.concat(skill_dict_list)
  
-    # truth_labels = ['red', 'green', 'blue']
-    truth_labels = ['bottom', 'top', 'middle']
+    if type == "direction":
+        truth_labels = ['bottom', 'top', 'middle']
+    else:
+        truth_labels = ['red', 'green', 'blue']
+
     # truth_labels = [str(x) for x in range(cluster_num)]
     prediction_labels = [chr(65 + x) for x in range(cluster_num)]
 

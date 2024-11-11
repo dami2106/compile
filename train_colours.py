@@ -14,7 +14,7 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups, get_directional_dict
+          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups, get_directional_dict, print_directions_against_truth
 
 import test_modules
 
@@ -211,6 +211,7 @@ except:
 all_true_boundaries = []
 all_predicted_boundaries = []
 dict_list_gmm = []
+directional_list_gmm = []
 
 for i in range(len(test_data_states)):
 
@@ -272,9 +273,10 @@ for i in range(len(test_data_states)):
     
 
     try:
-        # skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-        skill_dictionary = get_directional_dict(true_directions_each_timestamp, state_segments, clusters_gmm)
+        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
         dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
+        directional_dictionary = get_directional_dict(true_directions_each_timestamp, state_segments, clusters_gmm)
+        directional_list_gmm.append(pd.DataFrame( directional_dictionary ))
     except:
         print("Failed to get skill dictionary")
         print(state_array)
@@ -291,10 +293,13 @@ for i in range(len(test_data_states)):
     
 
     print_skills_against_truth(state_array, state_segments, clusters_gmm)
+    print_directions_against_truth(true_directions_each_timestamp, state_segments, clusters_gmm)
+    print()
 
 
 
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm)
+skill_acc_gmm = get_skill_accuracy(dict_list_gmm, type="skills")
+directional_acc_gmm = get_skill_accuracy(directional_list_gmm)
 print("\n=============================================")
 print("Segmentation Metrics:")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
@@ -308,9 +313,11 @@ print(f"F1 Score: {f1_score}")
 
 print("=============================================")
 print("Skill Accuracy:")
-# print(f"GMM: {skill_acc_gmm}")
-for acc in skill_acc_gmm:
-    print(f"{acc}")
+print(f"{skill_acc_gmm[0]}")
+print("\nDirectional Accuracy:")
+print(f"{directional_acc_gmm[0]}")
+# for acc in skill_acc_gmm:
+#     print(f"{acc}")
 
 # print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
