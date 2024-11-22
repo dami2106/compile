@@ -1,0 +1,21 @@
+{
+    "iterations": 500,
+    "learning_rate": 0.001,
+    "hidden_dim": 256,
+    "latent_dim": 32,
+    "latent_dist": "gaussian",
+    "batch_size": 512,
+    "num_segments": 3,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/15k",
+    "save_dir": "runs/testing",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 11,
+    "action_dim": 5,
+    "max_steps": 12,
+    "beta_b": 0.1,
+    "beta_z": 0.1,
+    "prior_rate": 3.0
+}

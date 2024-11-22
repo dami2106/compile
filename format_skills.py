@@ -98,7 +98,7 @@ def predict_clusters(cluster_model, new_latents):
     clusters = []
     for l in new_latents:
         cluster = cluster_model.predict([l])[0]
-        clusters.append(chr(65 + cluster))
+        clusters.append(cluster)
     return clusters
 
 
@@ -156,7 +156,16 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours
+    # return colours
+
+    #Convert the list of strings to a list of integers
+    colour_dict = {
+        "red": 0,
+        "green": 1,
+        "blue": 2
+    }
+
+    return [colour_dict[colour] for colour in colours]
 
 """
 A function to get the boundaries of the colour segments in the state set
@@ -306,6 +315,20 @@ def get_skill_dict(states, segments, clusters):
     
     return skill_dict
 
+
+def convert_dict_to_sota(skill_dict_list):
+    torch_segs, np_segs, torch_truth, np_truth = [], [], [], []
+
+    for d in skill_dict_list:
+        preds = d["Prediction"]
+        truths = d["Truth"]
+
+        torch_segs.append(torch.tensor(preds))
+        np_segs.append(np.array(preds))
+        torch_truth.append(torch.tensor(truths))
+        np_truth.append(np.array(truths))
+
+    return torch_segs, np_segs, torch_truth, np_truth
 
 #Takes in a list of dataframes
 def get_skill_accuracy(skill_dict_list, cluster_num = 4):

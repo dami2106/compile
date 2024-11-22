@@ -14,9 +14,9 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-        get_skill_accuracy, generate_elbow_plot, get_simple_obs_list
+        get_skill_accuracy, generate_elbow_plot, get_simple_obs_list, convert_dict_to_sota
 
-
+from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--iterations', type=int, default=1000,
@@ -204,13 +204,13 @@ model.eval()
 
 # Try load in the clustering model if it exists
 try:
-    # print("Loading GMM Model")
-    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
+# print("Loading GMM Model")
+    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'))
     print("GMM Model Loaded")
 except:
     print("Training Cluster Model")
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    gmm_model = create_GMM_model(train_latents, args, 3)
+    gmm_model = create_GMM_model(train_latents, args, args.num_segments)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
 
@@ -219,6 +219,7 @@ all_true_boundaries = []
 all_predicted_boundaries = []
 dict_list_gmm = []
 
+all_true_predicted_dicts = []
 
 for i in range(len(test_data_states)):
 
@@ -258,7 +259,7 @@ for i in range(len(test_data_states)):
     #Also save the segment indices
     state_segments = []
     action_segments = []
-    colour_objective_segments = []
+    # colour_objective_segments = []
     segment_indices = []
     for j in range(args.num_segments):
         start_idx = int(predicted_boundaries[j])
@@ -267,56 +268,83 @@ for i in range(len(test_data_states)):
 
         state_segments.append(state_array[start_idx:end_idx])
         action_segments.append(action_array[start_idx:end_idx])
-        colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
+        # colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
 
     #Get the predicted clusters for each segment
-    clusters_gmm = predict_clusters(gmm_model, test_latents)
+    predict_colours_each_timestep = predict_clusters(gmm_model, test_latents)
+    true_predicted_dict = get_skill_dict(state_array, state_segments, predict_colours_each_timestep)
+    all_true_predicted_dicts.append(true_predicted_dict)
+    # print("=============================================")
+    # print("Predicted Skills:")
+    # print(true_predicted_dict['Prediction'])
+    # print("True Skills:")
+    # print(true_predicted_dict['Truth'])
+    # print("=============================================")
 
-    
-
-    try:
-        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-        dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
-    except:
-        print("Failed to get skill dictionary")
-        print(state_array)
-        print("----------------")
-        print(state_segments)
-        print("----------------")
-        print(clusters_gmm)
-        print("----------------")
-        print(predicted_boundaries)
-        print("----------------")
-        print(true_boundaries)
-        print("----------------")
+    # dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
 
 
 
-
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm, 3)
-print("\n=============================================")
-print("Segmentation Metrics:")
+print("\n========== Segmentation Metrics: ==========")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-print(f"Overall MSE: {overall_mse}")
-print(f"Overall L2 Distance: {overall_l2_distance}")
-print(f"Accuracy: {accuracy}")
-print(f"Precision: {precision}")
-print(f"Recall: {recall}")
-print(f"F1 Score: {f1_score}")
+
+# Format and align results for better readability
+print(f"{'MSE:':<15} {overall_mse:.4f}")
+print(f"{'L2 Distance:':<15} {overall_l2_distance:.4f}")
+print(f"{'Accuracy:':<15} {accuracy:.4%}")
+print(f"{'Precision:':<15} {precision:.4%}")
+print(f"{'Recall:':<15} {recall:.4%}")
+print(f"{'F1 Score:':<15} {f1_score:.4%}")
+print("===========================================\n")
+
+# SOTA Metrics calculations
+torch_segs, np_segs, torch_truth, np_truth = convert_dict_to_sota(all_true_predicted_dicts)
+mask = [torch.ones_like(seg).bool() for seg in torch_segs]
+
+per_metrics = indep_eval_metrics(
+    torch_segs, 
+    torch_truth,
+    mask,
+    metrics=['mof', 'f1', 'miou']
+)
+
+mof_full, _ = eval_mof(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+f1_full, _ = eval_f1(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+miou_full, _ = eval_miou(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+print("\n=============== SOTA Metrics: ===============")
+print(f"{'F1 Full:':<15} {f1_full:.4f}")
+print(f"{'F1 Per:':<15} {per_metrics['f1']:.4f}")
+print(f"{'MIOU Full:':<15} {miou_full:.4f}")
+print(f"{'MIOU Per:':<15} {per_metrics['miou']:.4f}")
+print(f"{'MOF Full:':<15} {mof_full:.4f}")
+print(f"{'MOF Per:':<15} {per_metrics['mof']:.4f}")
+print("==============================================\n")
 
 
-print("=============================================")
-print("Skill Accuracy:")
-# print(f"GMM: {skill_acc_gmm}")
-for acc in skill_acc_gmm:
-    print(f"{acc}")
-print()
+# skill_acc_gmm = get_skill_accuracy(dict_list_gmm, args.num_segments)
+# print("=============================================")
+# print("Skill Accuracy:")
+# # print(f"GMM: {skill_acc_gmm}")
+# for acc in skill_acc_gmm:
+#     print(f"{acc}")
+# print()
 
-
-#  seg_acc, skill_acc, l2_dist
-
-# print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
