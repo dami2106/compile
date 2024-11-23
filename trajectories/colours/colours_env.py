@@ -4,6 +4,7 @@ import numpy as np
 from random import randint, shuffle
 from PIL import Image
 from collections import deque
+import argparse
 
 class ColorsEnv(gym.Env):
     def __init__(self, env_name):
@@ -308,61 +309,16 @@ def save_colours_demonstrations(nb_traces = 100, max_steps = 12):
     np.save(f'trajectories/colours/{nb_traces}_nopick_states', data_states)
     np.save(f'trajectories/colours/{nb_traces}_nopick_actions', data_actions)
 
-def save_colours_demonstrations_new(nb_traces = 100):
-    env = ColorsEnv('colours')
-
-    data_states = []
-    data_actions = []
-
-    tn = 0 
-    
-    while tn < nb_traces:
-        # try: 
-        states, actions, _, _, done = run_episode(env)
-
-        if done :
-            np_states = []
-            for i in range(len(states)):
-                np_states.append(np.array(states[i]))
-            
-            data_states.append(np.array(np_states))
-            data_actions.append(np.array(actions))
-            tn += 1
-        # except:
-        #     pass
-
-    data_states = np.array(data_states)
-    data_actions = np.array(data_actions)
-
-    np.save(f'trajectories/colours/{nb_traces}_varied_length_np_states', data_states, allow_pickle=True)
-    np.save(f'trajectories/colours/{nb_traces}_varied_length_np_actions', data_actions, allow_pickle=True)
-
 
 
 if __name__ == '__main__':
-    # env = ColorsEnv('colours')
-    # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--samples', type=int, default=1000,
+                        help='Number of episodes to include.')
+    parser.add_argument('--length', type=int, default=12,
+                        help='Length of each ep')
     
-    # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
-
-    # new_states, new_acts = add_in_pickup(ep_states, ep_actions)
-
-    # for s in ep_states:
-    #     print(s)
+    args = parser.parse_args()
     
-    # print()
-
-    # for s,a  in zip(new_states[:-1], new_acts[:-1]):
-    #     print(s, a)
-
-
-
-    # for s, a in zip(ep_states, ep_actions):
-    #     print(get_simple_obs(s), a)
-    #     print()
-
-    # print(done)
-
-    # save_colours_demonstrations(15000, 12)
-    save_colours_demonstrations(100, 12)
+    save_colours_demonstrations(args.samples, args.length)
    

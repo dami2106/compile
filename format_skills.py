@@ -190,7 +190,7 @@ A function to calculate the metrics for the predicted boundaries against the tru
 @param tolerance: The tolerance for a predicted boundary to be considered correct (how far it can be from the true boundary)
 @return: A tuple of the overall MSE, overall L2 distance, accuracy, precision, recall, and F1 score
 """
-def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance=1):
+def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance=0):
     mse_list = []
     l2_distance_list = []
     total_true_positives = 0

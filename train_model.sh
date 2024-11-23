@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-iterations=500
+iterations=1000
 learning_rate=0.001
 hidden_dim=256
 latent_dim=32
