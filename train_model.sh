@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-iterations=1000
+iterations=50
 learning_rate=0.001
 hidden_dim=256
 latent_dim=32
@@ -9,7 +9,7 @@ latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
 demo_file="trajectories/colours/100_nopick"
-save_dir="runs/testing"
+save_dir="runs/testing2"
 random_seed=42
 train_model=true
 state_dim=11

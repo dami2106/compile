@@ -65,6 +65,10 @@ parser.add_argument('--beta-z', type=float, default=0.1,
 parser.add_argument('--prior-rate', type=float, default=3.0,
                     help='maximum number of steps in an expert trajectory')
 
+parser.add_argument('--verbose',  action='store_true', default=False,
+                    help='Flag to indicate whether to print debugging information.')
+
+
 args = parser.parse_args()
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -139,7 +143,7 @@ best_rec_acc = 0
 best_nll = np.inf
 
 if args.train_model:
-    print('Training model with ', device)
+    # print('Training model with ', device)
     writer = SummaryWriter(log_dir = args.save_dir)
     while step < args.iterations:
         optimizer.zero_grad()
@@ -168,7 +172,8 @@ if args.train_model:
             # Accumulate metrics.
             batch_acc = acc.item()
             batch_loss = nll.item()
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+            if args.verbose:
+                print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
             if batch_acc > best_rec_acc and batch_loss < best_nll:
                 best_rec_acc = batch_acc
                 best_nll = batch_loss
@@ -183,8 +188,6 @@ if args.train_model:
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
-    print("Best Reconstruction Accuracy: ", best_rec_acc)
-    print("Best NLL: ", best_nll)
     if args.results_file:
         with open(args.results_file, 'a') as f:
             f.write(' '.join(sys.argv))
@@ -195,9 +198,9 @@ if args.train_model:
             f.write(str(model.K))
             f.write('\n')
 else:
-    print("Loading Model")
+    # print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    print("Model Loaded")
+    # print("Model Loaded")
 
 
 # print("Evaluating Model")
@@ -208,9 +211,9 @@ model.eval()
 try:
 # print("Loading GMM Model")
     gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'))
-    print("GMM Model Loaded")
+    # print("GMM Model Loaded")
 except:
-    print("Training Cluster Model")
+    # print("Training Cluster Model")
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
     gmm_model = create_GMM_model(train_latents, args, args.num_segments)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
@@ -278,29 +281,17 @@ for i in range(len(test_data_states)):
     predict_colours_each_timestep = predict_clusters(gmm_model, test_latents)
     true_predicted_dict = get_skill_dict(state_array, state_segments, predict_colours_each_timestep)
     all_true_predicted_dicts.append(true_predicted_dict)
-    # print("=============================================")
-    # print("Predicted Skills:")
-    # print(true_predicted_dict['Prediction'])
-    # print("True Skills:")
-    # print(true_predicted_dict['Truth'])
-    # print("=============================================")
-
-    # dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
 
 
 
 
-print("\n========== Segmentation Metrics: ==========")
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
 
-# Format and align results for better readability
-print(f"{'MSE:':<15} {overall_mse:.4f}")
-print(f"{'L2 Distance:':<15} {overall_l2_distance:.4f}")
-print(f"{'Accuracy:':<15} {accuracy:.4%}")
-print(f"{'Precision:':<15} {precision:.4%}")
-print(f"{'Recall:':<15} {recall:.4%}")
-print(f"{'F1 Score:':<15} {f1_score:.4%}")
-print("===========================================\n")
+if args.verbose:
+    print("\n========== Segmentation Metrics: ==========")
+    print(f"{'MSE:':<15} {overall_mse:.4f}")
+    print(f"{'L2 Distance:':<15} {overall_l2_distance:.4f}")
+    print("===========================================\n")
 
 # SOTA Metrics calculations
 torch_segs, np_segs, torch_truth, np_truth = convert_dict_to_sota(all_true_predicted_dicts)
@@ -331,22 +322,20 @@ miou_full, _ = eval_miou(
     n_videos=len(np_segs)
 )
 
-print("\n=============== SOTA Metrics: ===============")
-print(f"{'F1 Full:':<15} {f1_full:.4f}")
-print(f"{'F1 Per:':<15} {per_metrics['f1']:.4f}")
-print(f"{'MIOU Full:':<15} {miou_full:.4f}")
-print(f"{'MIOU Per:':<15} {per_metrics['miou']:.4f}")
-print(f"{'MOF Full:':<15} {mof_full:.4f}")
-print(f"{'MOF Per:':<15} {per_metrics['mof']:.4f}")
-print("==============================================\n")
+if args.verbose:
+    print("\n=============== SOTA Metrics: ===============")
+    print(f"{'F1 Full:':<15} {f1_full:.4f}")
+    print(f"{'F1 Per:':<15} {per_metrics['f1']:.4f}")
+    print(f"{'MIOU Full:':<15} {miou_full:.4f}")
+    print(f"{'MIOU Per:':<15} {per_metrics['miou']:.4f}")
+    print(f"{'MOF Full:':<15} {mof_full:.4f}")
+    print(f"{'MOF Per:':<15} {per_metrics['mof']:.4f}")
+    print("==============================================\n")
 
 
-# skill_acc_gmm = get_skill_accuracy(dict_list_gmm, args.num_segments)
-# print("=============================================")
-# print("Skill Accuracy:")
-# # print(f"GMM: {skill_acc_gmm}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
-# print()
+print(overall_l2_distance, f1_full, per_metrics['f1'], miou_full, per_metrics['miou'], mof_full, per_metrics['mof'])
+
+
+# l2, f1_full, f1_per, miou_full, miou_per, mof_full, mof_per = result.stdout.strip().split(" ")
 
 

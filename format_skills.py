@@ -238,7 +238,7 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     overall_l2_distance = np.mean(l2_distance_list)
 
     # Accuracy
-    accuracy = total_correct_boundaries / total_boundaries
+    # accuracy = total_correct_boundaries / total_boundaries
 
     # Precision: True Positives / (True Positives + False Positives)
     precision = total_true_positives / (total_true_positives + total_false_positives) if total_true_positives + total_false_positives > 0 else 0
@@ -249,7 +249,7 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     # F1 Score: Harmonic mean of Precision and Recall
     f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
-    return overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score
+    return overall_mse, overall_l2_distance, 0, precision, recall, f1_score
 
 
 
