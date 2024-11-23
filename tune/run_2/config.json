@@ -1,0 +1,22 @@
+{
+    "iterations": 50,
+    "learning_rate": 0.0001,
+    "hidden_dim": 128,
+    "latent_dim": 64,
+    "latent_dist": "gaussian",
+    "batch_size": 512,
+    "num_segments": 3,
+    "log_interval": 1,
+    "demo_file": "trajectories/colours/5000_nopick",
+    "save_dir": "tune/run_2",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "state_dim": 11,
+    "action_dim": 5,
+    "max_steps": 12,
+    "beta_b": 0.5,
+    "beta_z": 1.0,
+    "prior_rate": 5.0,
+    "verbose": false
+}

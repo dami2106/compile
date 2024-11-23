@@ -25,7 +25,7 @@ demo_file = "trajectories/colours/"
 # Hyperparameters to sweep
 
 iterations = [ 50, 100, 1000, 5000, 10000, 50000 ]
-files =      [ '50_nopick', '100_nopick', '1000_nopick', '5000_nopick', '15000_nopick' ]
+files =      [ '100_nopick', '1000_nopick', '5000_nopick', '15000_nopick' ]
 
 
 
@@ -81,5 +81,8 @@ for iteration, file_ in itertools.product(iterations, files):
     except Exception as e:
         print(f"Error with config: {' '.join(cmd)}")
         print(f"Exception: {e}")
+    
+    print()
+    print()
     
     run_count += 1
