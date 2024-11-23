@@ -88,9 +88,9 @@ else:
     args.train_model = False
 
 data_path = args.demo_file
-max_steps = args.max_steps
+# max_steps = args.max_steps
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda')
 
 
 
@@ -124,7 +124,8 @@ train_action_states = data_actions[train_test_split[int(len(data_states)*train_t
 test_data_states = data_states[train_test_split[:int(len(data_states)*train_test_split_ratio)]]
 test_action_states = data_actions[train_test_split[:int(len(data_states)*train_test_split_ratio)]]
 
-test_lengths = torch.tensor([max_steps-1] * len(test_data_states)).to(device)
+# test_lengths = torch.tensor([max_steps-1] * len(test_data_states)).to(device)
+test_lengths = torch.tensor([len(state) for state in test_data_states]).to(device)
 test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_action_states).to(device))
 
 perm = utils.PermManager(len(train_data_states), args.batch_size)
@@ -146,7 +147,8 @@ if args.train_model:
         # Generate data.
         batch = perm.get_indices()
         batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
-        lengths = torch.tensor([max_steps] * args.batch_size).to(device)
+        # lengths = torch.tensor([max_steps] * args.batch_size).to(device)
+        lengths = torch.tensor([len(state) for state in batch_states]).to(device)
         inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
 
         # Run forward pass.

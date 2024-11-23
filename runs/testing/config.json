@@ -7,7 +7,7 @@
     "batch_size": 512,
     "num_segments": 3,
     "log_interval": 1,
-    "demo_file": "trajectories/colours/15k",
+    "demo_file": "trajectories/colours/100_nopick",
     "save_dir": "runs/testing",
     "random_seed": 42,
     "results_file": null,
