@@ -24,7 +24,7 @@ demo_file = "trajectories/colours/"
 
 # Hyperparameters to sweep
 
-iterations = [ 50, 100, 1000, 5000, 10000, 50000 ]
+iterations = [ 100, 1000, 5000, 10000, 50000 ]
 files =      [ '100_nopick', '1000_nopick', '5000_nopick', '15000_nopick' ]
 
 

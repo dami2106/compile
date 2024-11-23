@@ -132,6 +132,12 @@ test_action_states = data_actions[train_test_split[:int(len(data_states)*train_t
 test_lengths = torch.tensor([len(state) for state in test_data_states]).to(device)
 test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_action_states).to(device))
 
+all_data_states = torch.tensor(data_states).to(device)
+all_action_states = torch.tensor(data_actions).to(device)
+
+# Create all_inputs tuple
+all_inputs = (all_data_states, all_action_states)
+
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
 
@@ -226,10 +232,10 @@ dict_list_gmm = []
 
 all_true_predicted_dicts = []
 
-for i in range(len(test_data_states)):
+for i in range(len(all_data_states)):
 
     #Get a single datapoint from the test states
-    single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
+    single_input = (all_inputs[0][i].unsqueeze(0), all_inputs[1][i].unsqueeze(0))
     single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
 
     #Do a forward pass through the model using the single input point
@@ -288,6 +294,13 @@ for i in range(len(test_data_states)):
 overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
 
 if args.verbose:
+    print("Details")
+    print("Length of data: ", len(all_data_states))
+    print("Length of data tested: ", len(all_true_boundaries))
+    print()
+
+
+if args.verbose:
     print("\n========== Segmentation Metrics: ==========")
     print(f"{'MSE:':<15} {overall_mse:.4f}")
     print(f"{'L2 Distance:':<15} {overall_l2_distance:.4f}")
@@ -333,7 +346,8 @@ if args.verbose:
     print("==============================================\n")
 
 
-print(overall_l2_distance, f1_full, per_metrics['f1'], miou_full, per_metrics['miou'], mof_full, per_metrics['mof'])
+if not args.verbose:
+    print(overall_l2_distance, f1_full, per_metrics['f1'], miou_full, per_metrics['miou'], mof_full, per_metrics['mof'])
 
 
 # l2, f1_full, f1_per, miou_full, miou_per, mof_full, mof_per = result.stdout.strip().split(" ")

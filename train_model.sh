@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # Variables
-iterations=50
+iterations=5000
 learning_rate=0.001
 hidden_dim=256
 latent_dim=32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
-demo_file="trajectories/colours/100_nopick"
-save_dir="runs/testing2"
+demo_file="trajectories/colours/1000_nopick"
+save_dir="runs/testing4"
 random_seed=42
 train_model=true
+verbose=true
 state_dim=11
 action_dim=5
 max_steps=12
@@ -38,3 +39,4 @@ python3 train.py \
     --beta-z $beta_z \
     --prior-rate $prior_rate \
     $( [[ "$train_model" == true ]] && echo "--train-model" ) \
+    $( [[ "$verbose" == true ]] && echo "--verbose" ) \
