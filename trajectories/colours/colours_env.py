@@ -4,6 +4,7 @@ import numpy as np
 from random import randint, shuffle
 from PIL import Image
 from collections import deque
+import argparse
 
 
 class ColorsEnv(gym.Env):
@@ -36,16 +37,16 @@ class ColorsEnv(gym.Env):
     def setup_world(self):
         self.WORLD = np.zeros((self.SIZE, self.SIZE))
     
-        coordinates = []
+        # coordinates = []
 
 
-        coordinates.append((0, 2))
-        coordinates.append((4, 4))
-        coordinates.append((2, 1))
+        # coordinates.append((0, 2))
+        # coordinates.append((4, 4))
+        # coordinates.append((2, 1))
 
-        #randomise the position of the colours
-        shuffle(coordinates)
-        coordinates.append((2, 3))
+        # #randomise the position of the colours
+        # shuffle(coordinates)
+        # coordinates.append((2, 3))
 
 
 
@@ -56,14 +57,16 @@ class ColorsEnv(gym.Env):
         #         coordinates.append((x, y))
         #         break
         
-        coordinates.reverse()
+        # coordinates.reverse()
 
+        coordinates = set()
 
-        # while len(coordinates) < 4:
-        #     x = randint(*(0, self.SIZE - 1))
-        #     y = randint(*(0, self.SIZE - 1))
-        #     coordinates.add((x, y))
-        # coordinates = list(coordinates)
+        while len(coordinates) < 4:
+            x = randint(*(0, self.SIZE - 1))
+            y = randint(*(0, self.SIZE - 1))
+            coordinates.add((x, y))
+
+        coordinates = list(coordinates)
         # coordinates.reverse()
 
         # print("coords", coordinates)
@@ -305,12 +308,10 @@ def run_episode(env, goals = [2, 3, 4]):
     ep_actions = []
     ep_rewards = []
     ep_length = 0
-    path_lengths = [0, 0, 0]
-    path_i = 0
+
 
     for goal in goals:
         path = find_shortest_path(obs, goal)
-        path_lengths[path_i] = len(path)
 
         for action in path: 
             obs, reward, done, _ = env.step(action)
@@ -320,17 +321,15 @@ def run_episode(env, goals = [2, 3, 4]):
             ep_rewards.append(reward)
             ep_length += 1
 
-        path_i += 1
 
     ep_actions.append(-1)
 
-    equi_paths = (len(set(path_lengths)) == 1) and (path_lengths[0] == 3)
 
     # ep_states, ep_actions = add_in_pickup(ep_states, ep_actions)
 
     # ep_length = len(ep_states[:-1])
 
-    return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done, equi_paths
+    return ep_states[:-1], ep_actions[:-1], ep_rewards, ep_length, done
 
 
 
@@ -345,7 +344,7 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     while tn < nb_traces:
         try: 
-            states, actions, _, length, done, eq = run_episode(env)
+            states, actions, _, length, done = run_episode(env)
 
             if (length == max_steps) and done :
                 for i in range(length):
@@ -358,49 +357,18 @@ def save_colours_demonstrations(nb_traces = 15000, max_steps = 12):
     
     size = str(nb_traces).replace('0', '')
     
-    np.save(f'trajectories/colours/{size}k_layered_static_rand_states', data_states)
-    np.save(f'trajectories/colours/{size}k_layered_static_rand_actions', data_actions)
+    np.save(f'trajectories/colours/{nb_traces}_nopick_states', data_states)
+    np.save(f'trajectories/colours/{nb_traces}_nopick_actions', data_actions)
 
 
 if __name__ == '__main__':
-    env = ColorsEnv('colours')
-    # # np.set_printoptions(formatter={'all':lambda x: f'{x:>5}'})
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--samples', type=int, default=1000,
+                        help='Number of episodes to include.')
+    parser.add_argument('--length', type=int, default=12,
+                        help='Length of each ep')
     
-    # obs = env.reset() 
-
-    # print(obs)
-
-    # ep_states, ep_actions, ep_rewards, ep_length, done, equi = run_episode(env)
-
-    # new_states, new_acts = add_in_pickup(ep_states, ep_actions)
-
-    # for s in ep_states:
-    #     print(s)
+    args = parser.parse_args()
     
-    # print()
-
-    # for s,a  in zip(new_states[:-1], new_acts[:-1]):
-    #     print(s, a)
-
-
-
-    # for s, a in zip(ep_states, ep_actions):
-    #     print(get_simple_obs(s), a)
-    #     print()
-
-    # print(done)
-
-    # states, actions, _, length, done, eq = run_episode(env)
-
-    # for s in states:
-    #     for i in range(4):
-    #         print(s[i,:,:])
-    #     print()
-
-    # new_obs =  np.zeros((5, 5, 4), dtype=np.uint8)
-    # print(new_obs.shape)
-    # print(new_obs[:,:,0])
-
-
-    save_colours_demonstrations(5000, 12)
+    save_colours_demonstrations(args.samples, args.length)
    

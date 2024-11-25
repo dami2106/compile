@@ -77,7 +77,7 @@ def predict_clusters(cluster_model, new_latents):
     clusters = []
     for l in new_latents:
         cluster = cluster_model.predict([l])[0]
-        clusters.append(chr(65 + cluster))
+        clusters.append(cluster)
     return clusters
 
 
@@ -135,7 +135,13 @@ def determine_objectives(state_set):
     for i in range(third[0], third[1]):
         colours.append(ind[2][1])
 
-    return colours
+    colour_dict = {
+        "red": 0,
+        "green": 1,
+        "blue": 2
+    }
+
+    return [colour_dict[colour] for colour in colours]
 
 """
 A function to get the boundaries of the colour segments in the state set
@@ -204,7 +210,7 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     overall_l2_distance = np.mean(l2_distance_list)
 
     # Accuracy
-    accuracy = total_correct_boundaries / total_boundaries
+    # accuracy = total_correct_boundaries / total_boundaries
 
     # Precision: True Positives / (True Positives + False Positives)
     precision = total_true_positives / (total_true_positives + total_false_positives) if total_true_positives + total_false_positives > 0 else 0
@@ -215,7 +221,7 @@ def calculate_metrics(true_boundaries_list, predicted_boundaries_list, tolerance
     # F1 Score: Harmonic mean of Precision and Recall
     f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
-    return overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score
+    return overall_mse, overall_l2_distance, 0, precision, recall, f1_score
 
 
 
@@ -523,3 +529,18 @@ def analyze_pickups(layered_states):
         directions.append(classifications[obj])
     
     return directions
+
+
+def convert_dict_to_sota(skill_dict_list):
+    torch_segs, np_segs, torch_truth, np_truth = [], [], [], []
+
+    for d in skill_dict_list:
+        preds = d["Prediction"]
+        truths = d["Truth"]
+
+        torch_segs.append(torch.tensor(preds))
+        np_segs.append(np.array(preds))
+        torch_truth.append(torch.tensor(truths))
+        np_truth.append(np.array(truths))
+
+    return torch_segs, np_segs, torch_truth, np_truth

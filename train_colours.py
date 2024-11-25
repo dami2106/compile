@@ -14,9 +14,12 @@ import pandas as pd
 
 from format_skills import determine_objectives, predict_clusters, create_KM_model, \
     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
-          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups, get_directional_dict, print_directions_against_truth
+          get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups,\
+              get_directional_dict, print_directions_against_truth, convert_dict_to_sota
 
 import test_modules
+
+from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
 
 parser = argparse.ArgumentParser()
@@ -61,6 +64,9 @@ parser.add_argument('--kernel', type=int, default=3,
                     help='maximum number of steps in an expert trajectory')
 parser.add_argument('--stride', type=int, default=1,
                     help='maximum number of steps in an expert trajectory')
+
+parser.add_argument('--verbose',  action='store_true', default=False,
+                    help='Flag to indicate whether to print debugging information.')
 
 args = parser.parse_args()
 
@@ -133,6 +139,12 @@ test_action_states = data_actions[train_test_split[:int(len(data_states)*train_t
 test_lengths = torch.tensor([max_steps-1] * len(test_data_states)).to(device)
 test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_action_states).to(device))
 
+all_data_states = torch.tensor(data_states).to(device)
+all_action_states = torch.tensor(data_actions).to(device)
+
+# Create all_inputs tuple
+all_inputs = (all_data_states, all_action_states)
+
 perm = utils.PermManager(len(train_data_states), args.batch_size)
 
 
@@ -175,7 +187,9 @@ if args.train_model:
         # Accumulate metrics.
         batch_acc = acc.item()
         batch_loss = nll.item()
-        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+
+        if args.verbose:
+            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
         
         # Log to TensorBoard
         writer.add_scalar('Loss/nll_train', batch_loss, step)
@@ -186,11 +200,13 @@ if args.train_model:
 
     writer.close()
     model.save(os.path.join(run_dir, 'checkpoint.pth'))
+    if args.verbose:
+        print("Model Saved")
 
 else:
-    # print("Loading Model")
     model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    # print("Model Loaded")
+    if args.verbose:
+        print("Model Loaded")
 
 
 # print("Evaluating Model")
@@ -198,12 +214,15 @@ model.eval()
 
 
 try:
-    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'), weights_only=False)
-    # print("GMM Model Loaded")
+    gmm_model = torch.load(os.path.join(run_dir, 'gmm_model.pth'))
+    if args.verbose:
+        print("GMM Model Loaded")
 except:
-    # print("Training Cluster Model")
+    if args.verbose:
+        print("Training Cluster Model")
+
     train_latents = get_latents(train_data_states, train_action_states, model, args, device)
-    gmm_model = create_GMM_model(train_latents, args, 3)
+    gmm_model = create_GMM_model(train_latents, args, args.num_segments)
     torch.save(gmm_model, os.path.join(run_dir, 'gmm_model.pth'))
 
 
@@ -211,12 +230,12 @@ except:
 all_true_boundaries = []
 all_predicted_boundaries = []
 dict_list_gmm = []
-directional_list_gmm = []
+all_true_predicted_dicts = []
 
-for i in range(len(test_data_states)):
+for i in range(len(all_data_states)):
 
     #Get a single datapoint from the test states
-    single_input = (test_inputs[0][i].unsqueeze(0), test_inputs[1][i].unsqueeze(0))
+    single_input = (all_inputs[0][i].unsqueeze(0), all_inputs[1][i].unsqueeze(0))
     single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
 
     #Do a forward pass through the model using the single input point
@@ -235,20 +254,15 @@ for i in range(len(test_data_states)):
 
     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
     single_raw_input = single_input[0].cpu().detach().numpy()[0]
-
-
-    state_array = get_simple_obs_list_from_layers(single_raw_input)
     action_array = single_input[1].cpu().detach().numpy()[0]
-
-   
-
+    state_array = get_simple_obs_list_from_layers(single_raw_input)
+    
 
     #Get a list of the true colour objectives at each time step and the true boundaries
     true_colours_each_timestep = determine_objectives(state_array)
     true_boundaries = get_boundaries(state_array)
     all_predicted_boundaries.append(predicted_boundaries)
     all_true_boundaries.append(true_boundaries)
-    true_directions_each_timestamp = analyze_pickups(single_raw_input)
 
 
     #Segment the states, actions, and colour objectives based on the predicted boundaries
@@ -264,62 +278,76 @@ for i in range(len(test_data_states)):
 
         state_segments.append(state_array[start_idx:end_idx])
         action_segments.append(action_array[start_idx:end_idx])
-        colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
+        # colour_objective_segments.append(true_colours_each_timestep[start_idx:end_idx])
         segment_indices.append((start_idx, end_idx))
 
 
     #Get the predicted clusters for each segment
-    clusters_gmm = predict_clusters(gmm_model, test_latents)
-    
-
-    try:
-        skill_dictionary = get_skill_dict(state_array, state_segments, clusters_gmm)
-        dict_list_gmm.append(pd.DataFrame( skill_dictionary ))
-        directional_dictionary = get_directional_dict(true_directions_each_timestamp, state_segments, clusters_gmm)
-        directional_list_gmm.append(pd.DataFrame( directional_dictionary ))
-    except:
-        print("Failed to get skill dictionary")
-        print(state_array)
-        print("----------------")
-        print(state_segments)
-        print("----------------")
-        print(clusters_gmm)
-        print("----------------")
-        print(predicted_boundaries)
-        print("----------------")
-        print(true_boundaries)
-        print("----------------")
+    predict_colours_each_timestep = predict_clusters(gmm_model, test_latents)
+    true_predicted_dict = get_skill_dict(state_array, state_segments, predict_colours_each_timestep)
+    # print(true_predicted_dict)
+    all_true_predicted_dicts.append(true_predicted_dict)
     
     
 
-    print_skills_against_truth(state_array, state_segments, clusters_gmm)
-    print_directions_against_truth(true_directions_each_timestamp, state_segments, clusters_gmm)
+overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
+
+if args.verbose:
+    print("Details")
+    print("Length of data: ", len(all_data_states))
+    print("Length of data tested: ", len(all_true_boundaries))
     print()
 
 
+if args.verbose:
+    print("\n========== Segmentation Metrics: ==========")
+    print(f"{'MSE:':<15} {overall_mse:.4f}")
+    print(f"{'L2 Distance:':<15} {overall_l2_distance:.4f}")
+    print("===========================================\n")
 
-skill_acc_gmm = get_skill_accuracy(dict_list_gmm, type="skills")
-directional_acc_gmm = get_skill_accuracy(directional_list_gmm)
-print("\n=============================================")
-print("Segmentation Metrics:")
-overall_mse, overall_l2_distance, accuracy, precision, recall, f1_score = calculate_metrics(all_true_boundaries, all_predicted_boundaries)
-print(f"Overall MSE: {overall_mse}")
-print(f"Overall L2 Distance: {overall_l2_distance}")
-print(f"Accuracy: {accuracy}")
-print(f"Precision: {precision}")
-print(f"Recall: {recall}")
-print(f"F1 Score: {f1_score}")
+# SOTA Metrics calculations
+torch_segs, np_segs, torch_truth, np_truth = convert_dict_to_sota(all_true_predicted_dicts)
+mask = [torch.ones_like(seg).bool() for seg in torch_segs]
+
+per_metrics = indep_eval_metrics(
+    torch_segs, 
+    torch_truth,
+    mask,
+    metrics=['mof', 'f1', 'miou']
+)
+
+mof_full, _ = eval_mof(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+f1_full, _ = eval_f1(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+miou_full, _ = eval_miou(
+    np.concatenate(np_segs), 
+    np.concatenate(np_truth),
+    n_videos=len(np_segs)
+)
+
+if args.verbose:
+    print("\n=============== SOTA Metrics: ===============")
+    print(f"{'F1 Full:':<15} {f1_full:.4f}")
+    print(f"{'F1 Per:':<15} {per_metrics['f1']:.4f}")
+    print(f"{'MIOU Full:':<15} {miou_full:.4f}")
+    print(f"{'MIOU Per:':<15} {per_metrics['miou']:.4f}")
+    print(f"{'MOF Full:':<15} {mof_full:.4f}")
+    print(f"{'MOF Per:':<15} {per_metrics['mof']:.4f}")
+    print("==============================================\n")
 
 
-print("=============================================")
-print("Skill Accuracy:")
-print(f"{skill_acc_gmm[0]}")
-print("\nDirectional Accuracy:")
-print(f"{directional_acc_gmm[0]}")
-# for acc in skill_acc_gmm:
-#     print(f"{acc}")
+if not args.verbose:
+    print(overall_l2_distance, f1_full, per_metrics['f1'], miou_full, per_metrics['miou'], mof_full, per_metrics['mof'])
 
-# print(skill_acc_gmm[0][1], accuracy, overall_l2_distance)
 
 
 
