@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Variables
-iterations=5000
-learning_rate=0.001
-hidden_dim=256
-latent_dim=32
+iterations=10000
+learning_rate=0.0001
+hidden_dim=128
+latent_dim=64
 latent_dist="gaussian"  # Or "concrete"
 batch_size=512
 num_segments=3
-demo_file="trajectories/colours/1000_nopick"
+demo_file="trajectories/colours/100_nopick"
 save_dir="runs/testing4"
 random_seed=42
 train_model=true
 verbose=true
 state_dim=11
-action_dim=5
+action_dim=4
 max_steps=12
-beta_b=0.1
-beta_z=0.1
-prior_rate=3.0
+beta_b=0.5
+beta_z=1.0
+prior_rate=5.0
 
 # Run the train.py script with the provided arguments
 python3 train.py \
