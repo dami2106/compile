@@ -301,7 +301,7 @@ def get_simple_obs(obs):
 
 def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
-    shuffle(goals) #Randomise order of colours 
+    # shuffle(goals) #Randomise order of colours 
     done = False 
     ep_states = [get_3d_obs(obs.copy())]
     # ep_states = [obs.copy()]

@@ -1,0 +1,20 @@
+{
+    "iterations": 5000,
+    "learning_rate": 0.0001,
+    "hidden_dim": 128,
+    "latent_dim": 64,
+    "latent_dist": "gaussian",
+    "batch_size": 256,
+    "num_segments": 3,
+    "demo_file": "trajectories/colours/100_nopick",
+    "save_dir": "runs/colours/testing_static_order",
+    "random_seed": 42,
+    "results_file": null,
+    "train_model": true,
+    "action_dim": 4,
+    "max_steps": 12,
+    "out_channels": 8,
+    "kernel": 3,
+    "stride": 1,
+    "verbose": true
+}

@@ -4,7 +4,7 @@
 # ldconfig -p | grep cuda
 
 # Variables
-iterations=5
+iterations=5000
 domain="colours"
 learning_rate=0.0001
 hidden_dim=128 #256
@@ -12,11 +12,11 @@ latent_dim=64 #32
 latent_dist="gaussian"  # Or "concrete"
 batch_size=256
 num_segments=3
-demo_file="trajectories/colours/1000_nopick"
-save_dir="runs/colours/testing_new_2"
+demo_file="trajectories/colours/100_nopick"
+save_dir="runs/colours/testing_static_order"
 random_seed=42
 train_model=true
-verbose=false
+verbose=true
 action_dim=4
 max_steps=12
 out_channels=8
