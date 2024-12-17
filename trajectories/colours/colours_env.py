@@ -37,12 +37,12 @@ class ColorsEnv(gym.Env):
     def setup_world(self):
         self.WORLD = np.zeros((self.SIZE, self.SIZE))
     
-        # coordinates = []
+        coordinates = []
 
 
-        # coordinates.append((0, 2))
-        # coordinates.append((4, 4))
-        # coordinates.append((2, 1))
+        coordinates.append((0, 2))
+        coordinates.append((4, 4))
+        coordinates.append((2, 1))
 
         # #randomise the position of the colours
         # shuffle(coordinates)
@@ -50,26 +50,26 @@ class ColorsEnv(gym.Env):
 
 
 
-        # while True:
-        #     x = randint(*(0, self.SIZE - 1))
-        #     y = randint(*(0, self.SIZE - 1))
-        #     if (x, y) not in coordinates:
-        #         coordinates.append((x, y))
-        #         break
-        
-        # coordinates.reverse()
-
-        coordinates = set()
-
-        while len(coordinates) < 4:
+        while True:
             x = randint(*(0, self.SIZE - 1))
             y = randint(*(0, self.SIZE - 1))
-            coordinates.add((x, y))
+            if (x, y) not in coordinates:
+                coordinates.append((x, y))
+                break
+        
+        coordinates.reverse()
 
-        coordinates = list(coordinates)
+        # coordinates = set()
+
+        # while len(coordinates) < 4:
+        #     x = randint(*(0, self.SIZE - 1))
+        #     y = randint(*(0, self.SIZE - 1))
+        #     coordinates.add((x, y))
+
+        # coordinates = list(coordinates)
         # coordinates.reverse()
 
-        # print("coords", coordinates)
+        print("coords", coordinates)
 
         for i, coord in enumerate(coordinates):
             self.WORLD[coord[0], coord[1]] = i + 1
@@ -301,7 +301,7 @@ def get_simple_obs(obs):
 
 def run_episode(env, goals = [2, 3, 4]):
     obs = env.reset()
-    # shuffle(goals) #Randomise order of colours 
+    shuffle(goals) #Randomise order of colours 
     done = False 
     ep_states = [get_3d_obs(obs.copy())]
     # ep_states = [obs.copy()]
