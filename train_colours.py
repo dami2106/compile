@@ -17,7 +17,7 @@ from format_skills import determine_objectives, predict_clusters, create_KM_mode
           get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups,\
               get_directional_dict, print_directions_against_truth, convert_dict_to_sota
 
-import test_modules
+import cnn_modules
 
 from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
@@ -99,7 +99,7 @@ torch.manual_seed(args.random_seed)
 
 
 
-model = test_modules.TestILE(
+model = cnn_modules.TestILE(
     state_dim=(4, 5, 5),
     action_dim=args.action_dim,
     hidden_dim=args.hidden_dim,
@@ -114,19 +114,11 @@ model = test_modules.TestILE(
 # parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) for subpolicy in model.subpolicies], []) # test here
 parameter_list = list(model.parameters())  # test here
 
-
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
-# data_states = np.load(data_path + '_states.npy', allow_pickle=True).reshape(100, 12, 2, 50)
-data_states = np.load(data_path + '_states.npy', allow_pickle=True) #Shzpe is 100, 12, 4, 5, 5
+data_states = np.load(data_path + '_states.npy', allow_pickle=True) 
 data_actions = np.load(data_path + '_actions.npy', allow_pickle=True)
  
-
-
-# print(data_states.shape)
-# print(data_actions.shape)
-
-
 train_test_split = np.random.permutation(len(data_states))
 train_test_split_ratio = 0.01
 
@@ -142,71 +134,50 @@ test_inputs = (torch.tensor(test_data_states).to(device), torch.tensor(test_acti
 all_data_states = torch.tensor(data_states).to(device)
 all_action_states = torch.tensor(data_actions).to(device)
 
-# Create all_inputs tuple
 all_inputs = (all_data_states, all_action_states)
-
 perm = utils.PermManager(len(train_data_states), args.batch_size)
-
-
-
 
 step = 0
 rec = None
 batch_loss = 0
 batch_acc = 0
 
-if args.train_model:
-    # print('Training model with ', device)
-    writer = SummaryWriter(log_dir = args.save_dir)
-    while step < args.iterations:
-        optimizer.zero_grad()
+writer = SummaryWriter(log_dir = args.save_dir)
+while step < args.iterations:
+    optimizer.zero_grad()
 
-        # Generate data.
-        batch = perm.get_indices() 
-        batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
-        lengths = torch.tensor([max_steps] * args.batch_size).to(device)
-        inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
+    batch = perm.get_indices() 
+    batch_states, batch_actions = train_data_states[batch], train_action_states[batch]
+    lengths = torch.tensor([max_steps] * args.batch_size).to(device)
+    inputs = (torch.tensor(batch_states).to(device), torch.tensor(batch_actions).to(device))
 
-  
-        # Run forward pass.
-        model.train()
-        outputs = model.forward(inputs, lengths)
-        
-        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
-       
+    model.train()
+    outputs = model.forward(inputs, lengths)
+    loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+    loss.backward()
+    optimizer.step()
 
-        loss.backward()
-        optimizer.step()
-        
+    # Run evaluation.
+    model.eval()
+    outputs = model.forward(test_inputs, test_lengths)
+    acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
 
-        # Run evaluation.
-        model.eval()
-        outputs = model.forward(test_inputs, test_lengths)
-        acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+    # Accumulate metrics.
+    batch_acc = acc.item()
+    batch_loss = nll.item()
 
-        # Accumulate metrics.
-        batch_acc = acc.item()
-        batch_loss = nll.item()
-
-        if args.verbose:
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
-        
-        # Log to TensorBoard
-        writer.add_scalar('Loss/nll_train', batch_loss, step)
-        writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
-
-        
-        step += 1
-
-    writer.close()
-    model.save(os.path.join(run_dir, 'checkpoint.pth'))
     if args.verbose:
-        print("Model Saved")
+        print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+    
+    # Log to TensorBoard
+    writer.add_scalar('Loss/nll_train', batch_loss, step)
+    writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)        
+    step += 1
 
-else:
-    model.load(os.path.join(run_dir, 'checkpoint.pth'))
-    if args.verbose:
-        print("Model Loaded")
+writer.close()
+model.save(os.path.join(run_dir, 'checkpoint.pth'))
+
+
 
 
 # print("Evaluating Model")
