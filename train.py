@@ -20,6 +20,18 @@ from torch.utils.tensorboard import SummaryWriter
 
 import pandas as pd
 
+from torch.nn.utils.rnn import pad_sequence
+
+import os
+import torch
+import numpy as np
+import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
+from torch.nn.utils.rnn import pad_sequence
+import utils
+from modules import CompILE
+
+
 # from format_skills import determine_objectives, predict_clusters, create_KM_model, \
 #     get_latents, create_GMM_model, get_boundaries, calculate_metrics,get_skill_dict, print_skills_against_truth,\
 #           get_skill_accuracy, get_simple_obs_list, get_simple_obs_list_from_layers, analyze_pickups,\
@@ -38,7 +50,7 @@ parser.add_argument('--iterations', type=int, default=5,
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=10,
+parser.add_argument('--hidden-dim', type=int, default=12,
                     help='Number of hidden units.')
 parser.add_argument('--latent-dim', type=int, default=10,
                     help='Dimensionality of latent variables.')
@@ -65,7 +77,7 @@ parser.add_argument('--train-model', action='store_true',
 
 parser.add_argument('--state-dim', type=int, default=3,
                     help='Size of the state dimension')
-parser.add_argument('--action-dim', type=int, default=1,
+parser.add_argument('--action-dim', type=int, default=4,
                     help='Size of the action dimension')
 
 
@@ -106,7 +118,7 @@ args = parser.parse_args()
 # data_path = args.demo_file
 # max_steps = args.max_steps
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 np.random.seed(args.random_seed) # there were some issue with reproducibility
 torch.manual_seed(args.random_seed)
 
@@ -141,126 +153,99 @@ parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) fo
 
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
-# Define a dataset that loads one episode per file.
-class EpisodeDataset(Dataset):
-    def __init__(self, features_dir, actions_dir, groundTruth_dir):
-        # Get sorted lists of file paths so that matching episodes align.
-        self.feature_files = sorted([os.path.join(features_dir, f)
-                                     for f in os.listdir(features_dir)
-                                     if f.endswith('.npy')])
-        self.action_files = sorted([os.path.join(actions_dir, f)
-                                    for f in os.listdir(actions_dir)
-                                    if f.endswith('.npy')])
-        self.gt_files = sorted([os.path.join(groundTruth_dir, f)
-                                for f in os.listdir(groundTruth_dir)])
-        # Ensure all folders have the same number of episodes.
-        # assert len(self.feature_files) == len(self.action_files) == len(self.gt_files), \
-        #     "Mismatch in number of episodes among features, actions, and ground truth."
 
-        print(len(self.feature_files), len(self.action_files), len(self.gt_files))
 
-    def __len__(self):
-        return len(self.feature_files)
+# Paths to data folders
+features_path = "Data/features"
+actions_path = "Data/actions"
 
-    def __getitem__(self, idx):
-        # Load states, actions, and ground truth for one episode.
-        states = np.load(self.feature_files[idx], allow_pickle=True)
-        actions = np.load(self.action_files[idx], allow_pickle=True)
-        
-        #Load GT from text files 
-        with open(self.gt_files[idx], 'r') as f:
-            gt = f.readlines()
-        gt = [x.strip() for x in gt]
-        
-        # Convert to tensors.
-        states = torch.tensor(states, dtype=torch.float)
-        actions = torch.tensor(actions, dtype=torch.float)
-        # gt = torch.tensor(gt, dtype=torch.str)
-        return states, actions, gt
+def load_trajectories(features_path, actions_path):
+    """Loads all trajectories and returns lists of tensors for states and actions."""
+    state_tensors, action_tensors = [], []
+    
+    # Get all episode files
+    episode_files = sorted(os.listdir(features_path))
 
-# Custom collate function that returns lists (no padding).
-def collate_fn(batch):
-    # Each item in the batch is a tuple: (states, actions, gt)
-    states_list, actions_list, gt_list = zip(*batch)
-    # Compute the lengths for each episode.
-    lengths = [s.size(0) for s in states_list]
-    # Return the lists as-is along with the lengths.
-    return (list(states_list), list(actions_list), list(gt_list)), lengths
+    print(episode_files)
+    
+    for file in episode_files:
+        if file.endswith(".npy"):
+            episode_id = file[:-4]  # Remove .npy extension
+            state_file = os.path.join(features_path, file)
+            action_file = os.path.join(actions_path, file)
+            
+            if os.path.exists(action_file):
+                states = torch.tensor(np.load(state_file), dtype=torch.float32)
+                actions = torch.tensor(np.load(action_file), dtype=torch.long)
+                
+                state_tensors.append(states)
+                action_tensors.append(actions)
+    
+    return state_tensors, action_tensors
 
-# Directories for the data.
-features_dir = 'Data/features'
-actions_dir = 'Data/actions'
-groundTruth_dir = 'Data/groundTruth'
+# Load data
+all_states, all_actions = load_trajectories(features_path, actions_path)
 
-# Create the dataset.
-dataset = EpisodeDataset(features_dir, actions_dir, groundTruth_dir)
+# Shuffle and split data
+train_test_split_ratio = 0.1
+num_episodes = len(all_states)
+indices = np.random.permutation(num_episodes)
+split_idx = int(num_episodes * train_test_split_ratio)
 
-# Shuffle and split the dataset into train and test sets (1% for testing).
-indices = np.random.permutation(len(dataset))
-test_ratio = 0.01
-test_size = int(len(dataset) * test_ratio)
-train_indices = indices[test_size:]
-test_indices = indices[:test_size]
+train_indices, test_indices = indices[split_idx:], indices[:split_idx]
+train_states = [all_states[i] for i in train_indices]
+train_actions = [all_actions[i] for i in train_indices]
+test_states = [all_states[i] for i in test_indices]
+test_actions = [all_actions[i] for i in test_indices]
 
-train_dataset = Subset(dataset, train_indices)
-test_dataset = Subset(dataset, test_indices)
+print(f"Number of training episodes: {len(train_states)}")
+print(f"Number of testing episodes: {len(test_states)}")
 
-# Create DataLoaders using the custom collate function.
-train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
-test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
+# Pad sequences for batch processing
+def pad_and_batch(data_list):
+    return pad_sequence(data_list, batch_first=True, padding_value=0)
 
-writer = SummaryWriter(log_dir=args.save_dir)
+test_data_states = pad_and_batch(test_states)
+test_action_states = pad_and_batch(test_actions)
+
+test_inputs = (test_data_states.to(device), test_action_states.to(device))
+
+perm = utils.PermManager(len(train_states), batch_size=32)
 step = 0
+batch_loss = 0
+batch_acc = 0
 
-while step < args.iterations:
+while step < 10000:  # Number of iterations
+    optimizer.zero_grad()
+    batch_indices = perm.get_indices()
+    batch_states = [train_states[i] for i in batch_indices]
+    batch_actions = [train_actions[i] for i in batch_indices]
+    
+    batch_states_padded = pad_and_batch(batch_states).to(device)
+    batch_actions_padded = pad_and_batch(batch_actions).to(device)
+    lengths = torch.tensor([len(seq) for seq in batch_states], dtype=torch.long).to(device)
+    
+    inputs = (batch_states_padded, batch_actions_padded)
     model.train()
-    for batch_data, lengths in train_loader:
-        # Unpack batch data (lists of tensors for states, actions, and ground truth).
-        states_list, actions_list, gt_list = batch_data
-        # Move each tensor to the target device.
-        states_list = [s.to(device) for s in states_list]
-        actions_list = [a.to(device) for a in actions_list]
-        # Convert lengths to tensor if needed.
-        lengths_tensor = torch.tensor(lengths).to(device)
+    outputs = model.forward(inputs, lengths)
 
-        #Convert states and actions to tensors
-        states_tensor = torch.tensor(states_list, dtype=torch.float)
-        actions_tensor = torch.tensor(actions_list, dtype=torch.float)
-        
-        optimizer.zero_grad()
-        # Prepare inputs for the model.
-        inputs = (states_list, actions_list)
-        outputs = model.forward(inputs, lengths_tensor)
-        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
-        loss.backward()
-        optimizer.step()
-        
-        # Run evaluation.
-        model.eval()
-        test_acc_list = []
-        test_loss_list = []
-        with torch.no_grad():
-            for test_batch, test_lengths in test_loader:
-                test_states_list, test_actions_list, test_gt_list = test_batch
-                test_states_list = [s.to(device) for s in test_states_list]
-                test_actions_list = [a.to(device) for a in test_actions_list]
-                test_lengths_tensor = torch.tensor(test_lengths).to(device)
-                test_inputs = (test_states_list, test_actions_list)
-                test_outputs = model.forward(test_inputs, test_lengths_tensor)
-                acc, rec = utils.get_reconstruction_accuracy(test_inputs, test_outputs, args)
-                test_loss_list.append(nll.item())
-                test_acc_list.append(acc.item())
-        avg_test_acc = np.mean(test_acc_list)
-        
-        if args.verbose:
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, nll.item(), avg_test_acc))
-        
-        writer.add_scalar('Loss/nll_train', nll.item(), step)
-        writer.add_scalar('Accuracy/rec_acc_eval', avg_test_acc, step)
-        step += 1
-        
-        if step >= args.iterations:
-            break
+    
+    loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+    loss.backward()
+    optimizer.step()
+    
+    # Evaluation
+    model.eval()
+    outputs = model.forward(test_inputs, torch.tensor([len(seq) for seq in test_states]).to(device))
+    acc, _ = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+    
+    batch_acc = acc.item()
+    batch_loss = nll.item()
+    
+    print(f'step: {step}, nll_train: {batch_loss:.6f}, rec_acc_eval: {batch_acc:.3f}')
+    # writer.add_scalar('Loss/nll_train', batch_loss, step)
+    # writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+    step += 1
 
-writer.close()
-model.save(os.path.join(run_dir, 'checkpoint.pth'))
+# writer.close()
+model.save("checkpoint.pth")
