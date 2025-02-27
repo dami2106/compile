@@ -33,13 +33,15 @@ from modules import CompILE
 
 import cnn_modules
 
+from dataloader import load_trajectories, pad_and_batch
+
 from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
 
 # ----------------- #
 #  Argument Parser  #   
 parser = argparse.ArgumentParser()
-parser.add_argument('--iterations', type=int, default=5,
+parser.add_argument('--iterations', type=int, default=500,
                     help='Number of training iterations.')
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
@@ -53,7 +55,7 @@ parser.add_argument('--latent-dist', type=str, default='gaussian',
 parser.add_argument('--batch-size', type=int, default=2,
                     help='Mini-batch size (for averaging gradients).')
 
-parser.add_argument('--num-segments', type=int, default=3,
+parser.add_argument('--num-segments', type=int, default=4,
                     help='Number of segments in data generation.')
 
 
@@ -103,42 +105,15 @@ parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) fo
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 
+# Define paths
 features_path = "Data/features"
 actions_path = "Data/actions"
 groundTruth_path = "Data/groundTruth"
 
-def load_trajectories(features_path, actions_path):
-    """Loads all trajectories and returns lists of tensors for states and actions."""
-    state_tensors, action_tensors, ground_truth = [], [], []
-    episode_files = sorted(os.listdir(features_path))
+# Load data
+all_states, all_actions, all_ground_truth = load_trajectories(features_path, actions_path, groundTruth_path)
 
-    
-    for file in episode_files:
-        if file.endswith(".npy"):
-            state_file = os.path.join(features_path, file)
-            action_file = os.path.join(actions_path, file)
-            ground_truth_file = os.path.join(groundTruth_path, file[:-4])
-            
-            if os.path.exists(action_file) and os.path.exists(ground_truth_file):
-                states = torch.tensor(np.load(state_file), dtype=torch.float32)
-                actions = torch.tensor(np.load(action_file), dtype=torch.long)
-                
-                #Ground truth file is a text file with eacu item on a new line 
-                with open(ground_truth_file, 'r') as f:
-                    truths = f.readlines()
-                    truths = [truth.strip() for truth in truths]
-
-                
-                state_tensors.append(states)
-                action_tensors.append(actions)
-                ground_truth.append(truths)
-    
-    return state_tensors, action_tensors, ground_truth
-
-
-all_states, all_actions, all_ground_truth = load_trajectories(features_path, actions_path)
-
-
+# Train-test split
 train_test_split_ratio = 0.1
 num_episodes = len(all_states)
 indices = np.random.permutation(num_episodes)
@@ -157,14 +132,14 @@ test_truth = [all_ground_truth[i] for i in test_indices]
 print(f"Number of training episodes: {len(train_states)}")
 print(f"Number of testing episodes: {len(test_states)}")
 
-# Pad sequences for batch processing
-def pad_and_batch(data_list):
-    return pad_sequence(data_list, batch_first=True, padding_value=0)
-
 test_data_states = pad_and_batch(test_states)
 test_action_states = pad_and_batch(test_actions)
 
+all_data_states = pad_and_batch(all_states)
+all_action_states = pad_and_batch(all_actions)
+
 test_inputs = (test_data_states.to(device), test_action_states.to(device))
+all_inputs = (all_data_states.to(device), all_action_states.to(device))
 
 perm = utils.PermManager(len(train_states), batch_size=32)
 step = 0
@@ -173,7 +148,7 @@ batch_acc = 0
 
 writer = SummaryWriter(log_dir="runs/experiment1")
 
-while step < 10000:  # Number of iterations
+while step < args.iterations:  # Number of iterations
     optimizer.zero_grad()
     batch_indices = perm.get_indices()
     batch_states = [train_states[i] for i in batch_indices]
@@ -199,7 +174,9 @@ while step < 10000:  # Number of iterations
     batch_acc = acc.item()
     batch_loss = nll.item()
     
-    print(f'step: {step}, nll_train: {batch_loss:.6f}, rec_acc_eval: {batch_acc:.3f}')
+    if step % 5 == 0:
+        print(f'step: {step}, nll_train: {batch_loss:.6f}, rec_acc_eval: {batch_acc:.3f}')
+
     writer.add_scalar('Loss/nll_train', batch_loss, step)
     writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
     step += 1
@@ -207,3 +184,33 @@ while step < 10000:  # Number of iterations
 # writer.close()
 model.save("checkpoint.pth")
 writer.close()
+
+model.eval()
+
+for i in range(len(all_states)):
+
+    #Get a single datapoint from the test states
+    single_input = (all_inputs[0][i].unsqueeze(0), all_inputs[1][i].unsqueeze(0))
+    single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
+
+    #Do a forward pass through the model using the single input point
+    _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
+
+    #Get the predicted boundaries and the latents for each segment
+    test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
+    predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+
+    #Sort the predicted boundaries in ascending order (smallest to largest)
+    predicted_boundaries = sorted(predicted_boundaries)
+
+    # #Skip incorrect segment predictions (when there is a boundary repeated)
+    # if len(set(predicted_boundaries)) < args.num_segments + 1:
+    #     continue
+
+    #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
+    single_raw_input = single_input[0].cpu().detach().numpy()[0]
+    action_array = single_input[1].cpu().detach().numpy()[0]
+
+    print(single_raw_input)
+
+    break

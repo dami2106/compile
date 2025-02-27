@@ -67,8 +67,8 @@ class CompILE(nn.Module):
         state_embedding = self.state_embedding(inputs[0])
         action_embedding = self.action_embedding(inputs[1].long())
 
-        print("state_embedding", state_embedding.shape)
-        print("action_embedding", action_embedding.shape)
+        # print("state_embedding", state_embedding.shape)
+        # print("action_embedding", action_embedding.shape)
 
 
         embedding = torch.cat([state_embedding, action_embedding], dim=-1)
