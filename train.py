@@ -35,7 +35,7 @@ import cnn_modules
 
 from dataloader import load_trajectories, pad_and_batch
 
-from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
+# from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
 
 # ----------------- #
