@@ -46,16 +46,16 @@ parser.add_argument('--iterations', type=int, default=500,
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=12,
+parser.add_argument('--hidden-dim', type=int, default=128,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=10,
+parser.add_argument('--latent-dim', type=int, default=64,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
-parser.add_argument('--batch-size', type=int, default=2,
+parser.add_argument('--batch-size', type=int, default=8,
                     help='Mini-batch size (for averaging gradients).')
 
-parser.add_argument('--num-segments', type=int, default=4,
+parser.add_argument('--num-segments', type=int, default=3,
                     help='Number of segments in data generation.')
 
 
@@ -64,7 +64,7 @@ parser.add_argument('--demo-file', type=str, default='Data',
 parser.add_argument('--save-dir', type=str, default='',
                     help='directory where model and results etc are saved')
 
-parser.add_argument('--random-seed', type=int, default=42,
+parser.add_argument('--random-seed', type=int, default=0,
                     help='Used to seed random number generators')
 parser.add_argument('--train-model', action='store_true', 
                     help='Flag to indicate whether to train the model.')
@@ -141,7 +141,7 @@ all_action_states = pad_and_batch(all_actions)
 test_inputs = (test_data_states.to(device), test_action_states.to(device))
 all_inputs = (all_data_states.to(device), all_action_states.to(device))
 
-perm = utils.PermManager(len(train_states), batch_size=32)
+perm = utils.PermManager(len(train_states), batch_size=args.batch_size)
 step = 0
 batch_loss = 0
 batch_acc = 0
@@ -211,6 +211,9 @@ for i in range(len(all_states)):
     single_raw_input = single_input[0].cpu().detach().numpy()[0]
     action_array = single_input[1].cpu().detach().numpy()[0]
 
+    print()
+    print(predicted_boundaries)
+    print()
     print(single_raw_input)
 
     break
