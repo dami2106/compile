@@ -120,20 +120,23 @@ def eval_f1(pred_labels, gt_labels, n_videos, exclude_cls=None, pred_to_gt=None,
 
 
 def indep_eval_metrics(pred_labels_batch, gt_labels_batch, mask, metrics=['mof', 'f1', 'miou'], exclude_cls=None, pred_to_gt=None):
-    """
-    Evaluates each video sequence in a batch independently and aggregates results. Handles multiple metrics at once
-    ** Used to get per metric, feed in a list of tensors for pred_labels_batch, gt_labels_batch, mask. 
-
-    """
     B = len(pred_labels_batch)
-
     values = {metric: 0. for metric in metrics}
 
     for b in range(B):
         p2gt_local = None if pred_to_gt is None else pred_to_gt
         for metric in metrics:
             eval_fn = score_fn_lookup[metric]
-            score, p2gt_local = eval_fn(pred_labels_batch[b][mask[b]].cpu().numpy(), gt_labels_batch[b][mask[b]].cpu().numpy(), 1, exclude_cls, p2gt_local)
+
+            pred = pred_labels_batch[b][mask[b]].cpu().numpy()
+            gt = gt_labels_batch[b][mask[b]].cpu().numpy()
+            
+            # print(f"Metric: {metric}, Pred: {pred}, GT: {gt}")
+
+            score, p2gt_local = eval_fn(pred, gt, 1, exclude_cls, p2gt_local)
+
+            # print(f"Score for {metric}: {score}")  # Check if it's always 1.0
+
             values[metric] += score / B
     return values
 

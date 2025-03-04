@@ -16,7 +16,7 @@ truths_name = [
 ]
 
 max_length = 0
-for i in range(50):
+for i in range(500):
     # Randomize the order in which sections are added
     random.shuffle(one_hot_vectors)
 

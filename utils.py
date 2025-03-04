@@ -8,6 +8,20 @@ EPS = 1e-17
 NEG_INF = -1e30
 
 
+def get_latents(states, actions, model, device):
+    model.eval()
+    
+    states_tensor = torch.as_tensor(states, device=device)
+    actions_tensor = torch.as_tensor(actions, device=device)
+    lengths_tensor = torch.tensor([len(state) for state in states]).to(device)
+
+    with torch.no_grad():  # Disable gradient tracking for inference
+        _, _, _, _, all_z = model.forward((states_tensor, actions_tensor), lengths_tensor)
+
+    latents = np.array([t.cpu().numpy() for t in all_z['samples']])
+
+    return latents
+
 def to_one_hot(indices, max_index):
     """Get one-hot encoding of index tensors."""
     zeros = torch.zeros(

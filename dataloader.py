@@ -35,6 +35,22 @@ def load_data(args, device):
     actions = [action_dict[k] for k in keys]
     ground_truths = [ground_truth_dict[k] for k in keys]
 
+    # Load the mapping file and create a dictionary to map ground truth strings to numbers.
+    mapping_file = os.path.join(args.demo, "mapping", "mapping.txt")
+    mapping_dict = {}
+    with open(mapping_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                parts = line.split()
+                if len(parts) >= 2:
+                    # parts[0] is the number and parts[1] is the ground truth label
+                    mapping_dict[parts[1]] = int(parts[0])
+
+    # Convert each ground truth list from strings to numbers using the mapping.
+    for i in range(len(ground_truths)):
+        ground_truths[i] = [mapping_dict[label] for label in ground_truths[i]]
+
     del state_files, action_files, ground_truth_files
 
     assert len(states) == len(actions) == len(ground_truths),\
@@ -43,7 +59,6 @@ def load_data(args, device):
     with open(f"{args.demo}/config.json") as f:
         config = json.load(f)
     max_episode_length = config['max_episode_length']
-
 
     # Pad the states, actions, and ground truths to the max episode length
     for i in range(len(states)):
@@ -56,6 +71,7 @@ def load_data(args, device):
         if action_len < max_episode_length:
             actions[i] = np.pad(actions[i], (0, max_episode_length - action_len), mode='edge')
         if truth_len < max_episode_length:
+            # For ground truths, pad with the last number
             ground_truths[i].extend([ground_truths[i][-1]] * (max_episode_length - truth_len))
 
     states = np.array(states, dtype=np.float32)  # Change to float32
@@ -63,10 +79,10 @@ def load_data(args, device):
 
     train_test_split = np.random.permutation(len(states))
 
-    train_states   = states [train_test_split[int(len(states)*args.test_size):]]
+    train_states   = states[train_test_split[int(len(states)*args.test_size):]]
     train_actions  = actions[train_test_split[int(len(states)*args.test_size):]]
 
-    test_states  = states [train_test_split[:int(len(states)*args.test_size)]]
+    test_states  = states[train_test_split[:int(len(states)*args.test_size)]]
     test_actions = actions[train_test_split[:int(len(states)*args.test_size)]]
 
     test_lengths = torch.tensor([len(state) for state in test_states], dtype=torch.long).to(device)
@@ -76,7 +92,7 @@ def load_data(args, device):
     )
 
     all_data_states = torch.tensor(states, dtype=torch.float32).to(device)
-    all_action_states = torch.tensor(actions, dtype=torch.float32).to(device)
+    all_action_states = torch.tensor(actions, dtype=torch.long).to(device)
 
     return {
         'train': (train_states, train_actions),
