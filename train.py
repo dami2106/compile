@@ -13,6 +13,7 @@ import datetime
 import json
 import torch
 import numpy as np
+import glob 
 
 import utils
 import modules
@@ -33,7 +34,7 @@ from modules import CompILE
 
 import cnn_modules
 
-from dataloader import load_trajectories, pad_and_batch
+from dataloader import load_trajectories
 
 # from metrics import eval_mof, eval_f1, eval_miou, indep_eval_metrics, ClusteringMetrics
 
@@ -52,7 +53,7 @@ parser.add_argument('--latent-dim', type=int, default=64,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
-parser.add_argument('--batch-size', type=int, default=8,
+parser.add_argument('--batch-size', type=int, default=4,
                     help='Mini-batch size (for averaging gradients).')
 
 parser.add_argument('--num-segments', type=int, default=3,
@@ -105,115 +106,134 @@ parameter_list = list(model.parameters()) + sum([list(subpolicy.parameters()) fo
 optimizer = torch.optim.Adam(parameter_list, lr=args.learning_rate)
 
 
-# Define paths
-features_path = "Data/features"
-actions_path = "Data/actions"
-groundTruth_path = "Data/groundTruth"
+# --- Data Loading ---
+# Get sorted lists of all state and action files.
+state_files = sorted(glob.glob('Data/features' + '/*.npy'))
+action_files = sorted(glob.glob('Data/actions' + '/*.npy'))
 
-# Load data
-all_states, all_actions, all_ground_truth = load_trajectories(features_path, actions_path, groundTruth_path)
+# Load each episode into a list.
+data_states = [np.load(sf) for sf in state_files]
+data_actions = [np.load(af) for af in action_files]
 
-# Train-test split
-train_test_split_ratio = 0.1
-num_episodes = len(all_states)
+# Stack episodes into one array. (Assumes all episodes have the same length and observation dimensions)
+data_states = np.stack(data_states)      # Shape: (num_episodes, episode_length, state_dim)
+data_actions = np.stack(data_actions)      # Shape: (num_episodes, episode_length)
+
+# --- Train/Test Split ---
+num_episodes = data_states.shape[0]
 indices = np.random.permutation(num_episodes)
-split_idx = int(num_episodes * train_test_split_ratio)
+train_test_split_ratio = 0.01
+split_index = int(num_episodes * train_test_split_ratio)
 
-train_indices, test_indices = indices[split_idx:], indices[:split_idx]
+test_indices = indices[:split_index]
+train_indices = indices[split_index:]
 
-train_states = [all_states[i] for i in train_indices]
-train_actions = [all_actions[i] for i in train_indices]
-train_truth = [all_ground_truth[i] for i in train_indices]
+train_data_states = data_states[train_indices]
+train_action_states = data_actions[train_indices]
+test_data_states = data_states[test_indices]
+test_action_states = data_actions[test_indices]
 
-test_states = [all_states[i] for i in test_indices]
-test_actions = [all_actions[i] for i in test_indices]
-test_truth = [all_ground_truth[i] for i in test_indices]
+# --- Pre-convert to Torch Tensors ---
+# Convert states to float32 (to match model expectations) and actions to default integer type.
+train_data_states = torch.tensor(train_data_states, dtype=torch.float32).to(device)
+train_action_states = torch.tensor(train_action_states).to(device)
+test_data_states = torch.tensor(test_data_states, dtype=torch.float32).to(device)
+test_action_states = torch.tensor(test_action_states).to(device)
 
-print(f"Number of training episodes: {len(train_states)}")
-print(f"Number of testing episodes: {len(test_states)}")
+# Since all episodes have the same length.
+episode_length = train_data_states.shape[1]
+test_lengths = torch.tensor([episode_length] * test_data_states.shape[0]).to(device)
 
-test_data_states = pad_and_batch(test_states)
-test_action_states = pad_and_batch(test_actions)
+# Group inputs as tuples (states, actions).
+train_inputs = (train_data_states, train_action_states)
+test_inputs = (test_data_states, test_action_states)
 
-all_data_states = pad_and_batch(all_states)
-all_action_states = pad_and_batch(all_actions)
+# Optionally, if you need all data (for evaluation) you can do:
+all_inputs = (torch.tensor(data_states, dtype=torch.float32).to(device),
+              torch.tensor(data_actions).to(device))
 
-test_inputs = (test_data_states.to(device), test_action_states.to(device))
-all_inputs = (all_data_states.to(device), all_action_states.to(device))
+# --- Training Loop Setup ---
+# Using a permutation manager that shuffles indices for each epoch.
+perm = utils.PermManager(len(train_data_states), args.batch_size)
 
-perm = utils.PermManager(len(train_states), batch_size=args.batch_size)
 step = 0
-batch_loss = 0
-batch_acc = 0
+best_rec_acc = 0
+best_nll = np.inf
 
-writer = SummaryWriter(log_dir="runs/experiment1")
+if args.train_model:
+    while step < args.iterations:
+        optimizer.zero_grad()
 
-while step < args.iterations:  # Number of iterations
-    optimizer.zero_grad()
-    batch_indices = perm.get_indices()
-    batch_states = [train_states[i] for i in batch_indices]
-    batch_actions = [train_actions[i] for i in batch_indices]
-    
-    batch_states_padded = pad_and_batch(batch_states).to(device)
-    batch_actions_padded = pad_and_batch(batch_actions).to(device)
-    lengths = torch.tensor([len(seq) for seq in batch_states], dtype=torch.long).to(device)
-    
-    inputs = (batch_states_padded, batch_actions_padded)
-    model.train()
-    outputs = model.forward(inputs, lengths)
+        # Sample a batch of episodes.
+        batch = perm.get_indices()
+        # Directly index pre-converted tensors.
+        batch_states = train_data_states[batch]
+        batch_actions = train_action_states[batch]
+        # Since all episodes are the same length, create a lengths tensor.
+        lengths = torch.tensor([episode_length] * batch_states.shape[0]).to(device)
+        inputs = (batch_states, batch_actions)
 
-    loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
-    loss.backward()
-    optimizer.step()
-    
-    # Evaluation
-    model.eval()
-    outputs = model.forward(test_inputs, torch.tensor([len(seq) for seq in test_states]).to(device))
-    acc, _ = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
-    
-    batch_acc = acc.item()
-    batch_loss = nll.item()
-    
-    if step % 5 == 0:
-        print(f'step: {step}, nll_train: {batch_loss:.6f}, rec_acc_eval: {batch_acc:.3f}')
+        # Run forward pass.
+        model.train()
+        outputs = model.forward(inputs, lengths)
+        loss, nll, kl_z, kl_b = utils.get_losses(inputs, outputs, args)
+        loss.backward()
+        optimizer.step()
 
-    writer.add_scalar('Loss/nll_train', batch_loss, step)
-    writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
+        # Run evaluation.
+        model.eval()
+        outputs = model.forward(test_inputs, test_lengths)
+        acc, rec = utils.get_reconstruction_accuracy(test_inputs, outputs, args)
+
+        # Accumulate metrics.
+        batch_acc = acc.item()
+        batch_loss = nll.item()
+
+        if args.verbose:
+            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+        
+        # # Log to TensorBoard
+        # writer.add_scalar('Loss/nll_train', batch_loss, step)
+        # writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)        
+        step += 1
+
+    # writer.add_scalar('Loss/nll_train', batch_loss, step)
+    # writer.add_scalar('Accuracy/rec_acc_eval', batch_acc, step)
     step += 1
 
 # writer.close()
-model.save("checkpoint.pth")
-writer.close()
+# model.save("checkpoint.pth")
+# writer.close()
 
-model.eval()
+# model.eval()
 
-for i in range(len(all_states)):
+# for i in range(len(all_states)):
 
-    #Get a single datapoint from the test states
-    single_input = (all_inputs[0][i].unsqueeze(0), all_inputs[1][i].unsqueeze(0))
-    single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
+#     #Get a single datapoint from the test states
+#     single_input = (all_inputs[0][i].unsqueeze(0), all_inputs[1][i].unsqueeze(0))
+#     single_input_length = torch.tensor([single_input[0].shape[1]]).to(device)
 
-    #Do a forward pass through the model using the single input point
-    _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
+#     #Do a forward pass through the model using the single input point
+#     _, _, _, all_b, all_z = model.forward(single_input, single_input_length)
 
-    #Get the predicted boundaries and the latents for each segment
-    test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
-    predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
+#     #Get the predicted boundaries and the latents for each segment
+#     test_latents = [tensor.detach().cpu().numpy()[0].tolist() for tensor in all_z['samples']]
+#     predicted_boundaries =  [0] + [torch.argmax(b, dim=1)[0].item() for b in all_b['samples']]
 
-    #Sort the predicted boundaries in ascending order (smallest to largest)
-    predicted_boundaries = sorted(predicted_boundaries)
+#     #Sort the predicted boundaries in ascending order (smallest to largest)
+#     predicted_boundaries = sorted(predicted_boundaries)
 
-    # #Skip incorrect segment predictions (when there is a boundary repeated)
-    # if len(set(predicted_boundaries)) < args.num_segments + 1:
-    #     continue
+#     # #Skip incorrect segment predictions (when there is a boundary repeated)
+#     # if len(set(predicted_boundaries)) < args.num_segments + 1:
+#     #     continue
 
-    #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
-    single_raw_input = single_input[0].cpu().detach().numpy()[0]
-    action_array = single_input[1].cpu().detach().numpy()[0]
+#     #Convert the input and action tensors to numpy arrays by detaching them from the GPU first
+#     single_raw_input = single_input[0].cpu().detach().numpy()[0]
+#     action_array = single_input[1].cpu().detach().numpy()[0]
 
-    print()
-    print(predicted_boundaries)
-    print()
-    print(single_raw_input)
+#     print()
+#     print(predicted_boundaries)
+#     print()
+#     print(single_raw_input)
 
-    break
+#     break

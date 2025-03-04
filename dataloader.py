@@ -1,10 +1,13 @@
 import os
 import numpy as np
 import torch
-from torch.nn.utils.rnn import pad_sequence
 
 def load_trajectories(features_path, actions_path, groundTruth_path):
-    """Loads all trajectories and returns lists of tensors for states, actions, and ground truth."""
+    """Loads all trajectories and returns lists of tensors for states, actions, and ground truth.
+    
+    Each episode is padded to the length of the longest episode using the last available
+    state, action, and ground truth.
+    """
     state_tensors, action_tensors, ground_truth = [], [], []
     episode_files = sorted(os.listdir(features_path))
 
@@ -27,21 +30,31 @@ def load_trajectories(features_path, actions_path, groundTruth_path):
                 action_tensors.append(actions)
                 ground_truth.append(truths)
     
+    # Determine the maximum episode length among all loaded episodes
+    max_length = max([states.shape[0] for states in state_tensors]) if state_tensors else 0
+
+    # Pad each episode to the maximum length
+    for i in range(len(state_tensors)):
+        current_length = state_tensors[i].shape[0]
+        if current_length < max_length:
+            pad_count = max_length - current_length
+
+            # Pad states: repeat the last state pad_count times
+            last_state = state_tensors[i][-1].unsqueeze(0)
+            pad_states = last_state.repeat(pad_count, 1)
+            state_tensors[i] = torch.cat([state_tensors[i], pad_states], dim=0)
+
+            # Pad actions: repeat the last action pad_count times
+            # Handles both 1D and multi-dimensional actions
+            last_action = action_tensors[i][-1].unsqueeze(0)
+            # Create repeat pattern based on the tensor's dimensions
+            repeat_pattern = [pad_count] + [1] * (action_tensors[i].dim() - 1)
+            pad_actions = last_action.repeat(*repeat_pattern)
+            action_tensors[i] = torch.cat([action_tensors[i], pad_actions], dim=0)
+
+            # Pad ground_truth: append the last truth pad_count times
+            last_truth = ground_truth[i][-1]
+            pad_truths = [last_truth] * pad_count
+            ground_truth[i] = ground_truth[i] + pad_truths
+
     return state_tensors, action_tensors, ground_truth
-
-def pad_and_batch(data_list):
-    """Pads sequences using the last state instead of padding with zeros."""
-    max_length = max(seq.shape[0] for seq in data_list)  # Find max sequence length
-
-    padded_sequences = []
-    for seq in data_list:
-        pad_length = max_length - seq.shape[0]
-        if pad_length > 0:
-            last_state = seq[-1].unsqueeze(0)  # Get last state and expand dimensions
-            padding = last_state.repeat(pad_length, *([1] * (seq.dim() - 1)))  # Repeat last state
-            padded_seq = torch.cat([seq, padding], dim=0)  # Concatenate with original sequence
-        else:
-            padded_seq = seq  # No padding needed
-        padded_sequences.append(padded_seq)
-
-    return torch.stack(padded_sequences)  # Stack into batch tensor

@@ -22,7 +22,8 @@ for i in range(50):
     sections = []
     for vec in one_hot_vectors:
         # Randomly choose the length of this section (between 1 and 3 rows)
-        section_length = np.random.randint(1, 4)  # upper bound is exclusive
+        section_length = 4  # upper bound is exclusive
+        # section_length = np.random.randint(1, 4)  # upper bound is exclusive
         # Create a section by repeating the one-hot vector for section_length rows
         section = np.tile(vec, (section_length, 1))
         sections.append(section)
