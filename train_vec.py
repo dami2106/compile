@@ -4,6 +4,7 @@ import numpy as np
 import modules 
 import dataloader
 import utils
+from tqdm import tqdm
 
 # --- ARGUMENT PARSING --- #
 parser = argparse.ArgumentParser()
@@ -43,7 +44,7 @@ parser.add_argument('--save', type=str, default='',
                     help='directory where model and config are saved')
 parser.add_argument('--random-seed', type=int, default=42,
                     help='Used to seed random number generators')
-parser.add_argument('--verbose',  action='store_true', default=False,
+parser.add_argument('--silent',  action='store_true',
                     help='Flag to indicate whether to print debugging information.')
 
 args = parser.parse_args()
@@ -88,8 +89,9 @@ step = 0
 rec = None
 batch_loss = 0
 batch_acc = 0
-best_rec_acc = 0
-best_nll = np.inf
+
+if not args.silent:
+    progress_bar = tqdm(total=args.iterations, desc="Training", dynamic_ncols=True)
 
 while step < args.iterations:
     optimizer.zero_grad()
@@ -106,7 +108,7 @@ while step < args.iterations:
     loss.backward()
     optimizer.step()
 
-    if step % 5 == 0:
+    if step % 5 == 0 and not args.silent:
         # Run evaluation.
         model.eval()
         outputs = model.forward(test_inputs, test_lengths)
@@ -115,7 +117,11 @@ while step < args.iterations:
         batch_acc = acc.item()
         batch_loss = nll.item()
 
-        if args.verbose:
-            print('step: {}, nll_train: {:.6f}, rec_acc_eval: {:.3f}'.format(step, batch_loss, batch_acc))
+    if not args.silent: 
+        progress_bar.set_postfix({
+        "NLL": f"{batch_loss:.6f}",
+        "Acc": f"{batch_acc:.3f}" if batch_acc is not None else "N/A"
+        })
+        progress_bar.update(1)
 
     step += 1 
