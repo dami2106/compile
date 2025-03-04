@@ -1,60 +1,85 @@
-import os
 import numpy as np
-import torch
+import glob
+import os 
+import json 
+import torch 
 
-def load_trajectories(features_path, actions_path, groundTruth_path):
-    """Loads all trajectories and returns lists of tensors for states, actions, and ground truth.
-    
-    Each episode is padded to the length of the longest episode using the last available
-    state, action, and ground truth.
-    """
-    state_tensors, action_tensors, ground_truth = [], [], []
-    episode_files = sorted(os.listdir(features_path))
+def load_data(args, device):
+    state_files = glob.glob(f"{args.demo}/features/*.npy")
+    state_dict = {}
+    for file in state_files:
+        key = os.path.splitext(os.path.basename(file))[0]  # e.g., "episode_0"
+        state_dict[key] = np.load(file)
 
-    for file in episode_files:
-        if file.endswith(".npy"):
-            state_file = os.path.join(features_path, file)
-            action_file = os.path.join(actions_path, file)
-            ground_truth_file = os.path.join(groundTruth_path, file[:-4])
-            
-            if os.path.exists(action_file) and os.path.exists(ground_truth_file):
-                states = torch.tensor(np.load(state_file), dtype=torch.float32)
-                actions = torch.tensor(np.load(action_file), dtype=torch.long)
-                
-                # Ground truth file is a text file with each item on a new line
-                with open(ground_truth_file, 'r') as f:
-                    truths = f.readlines()
-                    truths = [truth.strip() for truth in truths]
+    # Build dictionary for actions
+    action_files = glob.glob(f"{args.demo}/actions/*.npy")
+    action_dict = {}
+    for file in action_files:
+        key = os.path.splitext(os.path.basename(file))[0]
+        action_dict[key] = np.load(file)
 
-                state_tensors.append(states)
-                action_tensors.append(actions)
-                ground_truth.append(truths)
-    
-    # Determine the maximum episode length among all loaded episodes
-    max_length = max([states.shape[0] for states in state_tensors]) if state_tensors else 0
+    # Build dictionary for ground truths
+    ground_truth_files = glob.glob(f"{args.demo}/groundTruth/*")
+    ground_truth_dict = {}
+    for file in ground_truth_files:
+        # If the ground truth files don't have an extension, key will be the full name.
+        key = os.path.splitext(os.path.basename(file))[0]
+        with open(file) as f:
+            ground_truth_dict[key] = f.read().splitlines()
 
-    # Pad each episode to the maximum length
-    for i in range(len(state_tensors)):
-        current_length = state_tensors[i].shape[0]
-        if current_length < max_length:
-            pad_count = max_length - current_length
+    # Use the keys from state_dict (or the intersection of all keys, if needed)
+    keys = list(state_dict.keys())
+    keys.sort()  # Optional: sort keys to have a predictable order
 
-            # Pad states: repeat the last state pad_count times
-            last_state = state_tensors[i][-1].unsqueeze(0)
-            pad_states = last_state.repeat(pad_count, 1)
-            state_tensors[i] = torch.cat([state_tensors[i], pad_states], dim=0)
+    states = [state_dict[k] for k in keys]
+    actions = [action_dict[k] for k in keys]
+    ground_truths = [ground_truth_dict[k] for k in keys]
 
-            # Pad actions: repeat the last action pad_count times
-            # Handles both 1D and multi-dimensional actions
-            last_action = action_tensors[i][-1].unsqueeze(0)
-            # Create repeat pattern based on the tensor's dimensions
-            repeat_pattern = [pad_count] + [1] * (action_tensors[i].dim() - 1)
-            pad_actions = last_action.repeat(*repeat_pattern)
-            action_tensors[i] = torch.cat([action_tensors[i], pad_actions], dim=0)
+    del state_files, action_files, ground_truth_files
 
-            # Pad ground_truth: append the last truth pad_count times
-            last_truth = ground_truth[i][-1]
-            pad_truths = [last_truth] * pad_count
-            ground_truth[i] = ground_truth[i] + pad_truths
+    assert len(states) == len(actions) == len(ground_truths),\
+        "Error: Mismatch in the number of state, action, and ground truth files."
 
-    return state_tensors, action_tensors, ground_truth
+    with open(f"{args.demo}/config.json") as f:
+        config = json.load(f)
+    max_episode_length = config['max_episode_length']
+
+
+    # Pad the states, actions, and ground truths to the max episode length
+    for i in range(len(states)):
+        state_len = len(states[i])
+        action_len = len(actions[i])
+        truth_len = len(ground_truths[i])
+
+        if state_len < max_episode_length:
+            states[i] = np.pad(states[i], ((0, max_episode_length - state_len), (0, 0)), mode='edge')
+        if action_len < max_episode_length:
+            actions[i] = np.pad(actions[i], (0, max_episode_length - action_len), mode='edge')
+        if truth_len < max_episode_length:
+            ground_truths[i].extend([ground_truths[i][-1]] * (max_episode_length - truth_len))
+
+    states = np.array(states, dtype=np.float32)  # Change to float32
+    actions = np.array(actions)
+
+    train_test_split = np.random.permutation(len(states))
+
+    train_states   = states [train_test_split[int(len(states)*args.test_size):]]
+    train_actions  = actions[train_test_split[int(len(states)*args.test_size):]]
+
+    test_states  = states [train_test_split[:int(len(states)*args.test_size)]]
+    test_actions = actions[train_test_split[:int(len(states)*args.test_size)]]
+
+    test_lengths = torch.tensor([len(state) for state in test_states], dtype=torch.long).to(device)
+    test_inputs = (
+        torch.tensor(test_states, dtype=torch.float32).to(device),
+        torch.tensor(test_actions, dtype=torch.long).to(device)
+    )
+
+    all_data_states = torch.tensor(states, dtype=torch.float32).to(device)
+    all_action_states = torch.tensor(actions, dtype=torch.float32).to(device)
+
+    return {
+        'train': (train_states, train_actions),
+        'test': (test_inputs, test_lengths),
+        'all': (all_data_states, all_action_states, ground_truths)
+    }

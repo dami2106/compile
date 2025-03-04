@@ -57,19 +57,21 @@ class CompILE(nn.Module):
 
         # Decoder MLP.
         self.state_embedding_decoder = nn.Sequential(
+            # nn.Linear(state_dim, hidden_dim),
+            # nn.ReLU(),
+            # nn.Linear(hidden_dim, hidden_dim),
+            # nn.ReLU(),
         )
         self.subpolicies = [nn.Sequential(
+            # nn.Linear(hidden_dim, hidden_dim),
+            # nn.ReLU(),
             nn.Linear(state_dim, action_dim),
             nn.Softmax(dim=-1),
         ).to(device) for i in range(latent_dim)]
 
     def embed_input(self, inputs):
         state_embedding = self.state_embedding(inputs[0])
-        action_embedding = self.action_embedding(inputs[1].long())
-
-        # print("state_embedding", state_embedding.shape)
-        # print("action_embedding", action_embedding.shape)
-
+        action_embedding = self.action_embedding(inputs[1])
 
         embedding = torch.cat([state_embedding, action_embedding], dim=-1)
         return embedding
@@ -157,12 +159,9 @@ class CompILE(nn.Module):
             return None
 
     def forward(self, inputs, lengths):
-        
-
 
         # Embed inputs.
         embeddings = self.embed_input(inputs)
-
 
         # Create initial mask.
         mask = torch.ones(
@@ -208,7 +207,7 @@ class CompILE(nn.Module):
         torch.save(checkpoint, path)
 
     def load(self, path):
-        checkpoint = torch.load(path, weights_only=True)
+        checkpoint = torch.load(path)
         self.load_state_dict(checkpoint['model'])
         for i, subpolicy in enumerate(self.subpolicies):
             subpolicy.load_state_dict(checkpoint[f"subpolicy-{i}"])

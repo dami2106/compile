@@ -99,7 +99,7 @@ def get_segment_probs(all_b_samples, all_masks, segment_id):
         return neg_cumsum
 
 
-def get_losses(inputs, outputs, args, beta_b=.1, beta_z=.1, prior_rate=3.,):
+def get_losses(inputs, outputs, args):
     """Get losses (NLL, KL divergences and neg. ELBO).
 
     Args:
@@ -110,6 +110,10 @@ def get_losses(inputs, outputs, args, beta_b=.1, beta_z=.1, prior_rate=3.,):
         beta_z: Scaling factor for KL term of latents (z).
         prior_rate: Rate (lambda) for Poisson prior.
     """
+
+    beta_b = args.beta_b
+    beta_z = args.beta_z
+    prior_rate = args.prior_rate
 
     targets = inputs[1].view(-1)
     all_encs, all_recs, all_masks, all_b, all_z = outputs
