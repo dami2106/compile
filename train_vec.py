@@ -16,9 +16,9 @@ parser.add_argument('--iterations', type=int, default=10,
 
 parser.add_argument('--learning-rate', type=float, default=1e-3,
                     help='Learning rate.')
-parser.add_argument('--hidden-dim', type=int, default=128,
+parser.add_argument('--hidden-dim', type=int, default=16,
                     help='Number of hidden units.')
-parser.add_argument('--latent-dim', type=int, default=16,
+parser.add_argument('--latent-dim', type=int, default=8,
                     help='Dimensionality of latent variables.')
 parser.add_argument('--latent-dist', type=str, default='gaussian',
                     help='Choose: "gaussian" or "concrete" latent variables.')
@@ -47,7 +47,7 @@ parser.add_argument('--demo', type=str, default='Data',
                     help='path to the expert trajectories file')
 parser.add_argument('--save', type=str, default='',
                     help='directory where model and config are saved')
-parser.add_argument('--random-seed', type=int, default=42,
+parser.add_argument('--random-seed', type=int, default=0,
                     help='Used to seed random number generators')
 parser.add_argument('--silent',  action='store_true',
                     help='Flag to indicate whether to print debugging information.')
@@ -164,6 +164,8 @@ for i, (state, action, truth) in enumerate(zip(all_states, all_actions, all_trut
 
     # Skip incorrect segment predictions
     if len(predicted_boundaries) != args.num_segments + 1:
+        print(f"Skipping episode {i} as the number of segments predicted is incorrect.")
+        print(f"Predicted boundaries: {predicted_boundaries}")
         continue
 
     # Convert input tensors to numpy arrays
