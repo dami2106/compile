@@ -8,20 +8,6 @@ EPS = 1e-17
 NEG_INF = -1e30
 
 
-def get_latents(states, actions, model, device):
-    model.eval()
-    
-    states_tensor = torch.as_tensor(states, device=device)
-    actions_tensor = torch.as_tensor(actions, device=device)
-    lengths_tensor = torch.tensor([len(state) for state in states]).to(device)
-
-    with torch.no_grad():  # Disable gradient tracking for inference
-        _, _, _, _, all_z = model.forward((states_tensor, actions_tensor), lengths_tensor)
-
-    latents = np.array([t.cpu().numpy() for t in all_z['samples']])
-
-    return latents
-
 def to_one_hot(indices, max_index):
     """Get one-hot encoding of index tensors."""
     zeros = torch.zeros(
@@ -113,7 +99,7 @@ def get_segment_probs(all_b_samples, all_masks, segment_id):
         return neg_cumsum
 
 
-def get_losses(inputs, outputs, args):
+def get_losses(inputs, outputs, args, beta_b=.1, beta_z=.1, prior_rate=3.,):
     """Get losses (NLL, KL divergences and neg. ELBO).
 
     Args:
@@ -124,10 +110,6 @@ def get_losses(inputs, outputs, args):
         beta_z: Scaling factor for KL term of latents (z).
         prior_rate: Rate (lambda) for Poisson prior.
     """
-
-    beta_b = args.beta_b
-    beta_z = args.beta_z
-    prior_rate = args.prior_rate
 
     targets = inputs[1].view(-1)
     all_encs, all_recs, all_masks, all_b, all_z = outputs

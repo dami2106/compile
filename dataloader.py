@@ -1,101 +1,116 @@
+import torch
 import numpy as np
-import glob
+
+import utils
+import modules
 import os 
-import json 
-import torch 
 
-def load_data(args, device):
-    state_files = glob.glob(f"{args.demo}/features/*.npy")
-    state_dict = {}
-    for file in state_files:
-        key = os.path.splitext(os.path.basename(file))[0]  # e.g., "episode_0"
-        state_dict[key] = np.load(file)
+def pad_with_edge(lst, target_length):
+    """
+    Pads or truncates lst to exactly target_length, using the last element
+    as the pad value (edge mode).
+    """
+    n = len(lst)
+    if n >= target_length:
+        return lst[:target_length]
+    if n == 0:
+        raise ValueError("Cannot pad an empty list in edge mode (no last element).")
+    pad_token = lst[-1]
+    # how many times to pad
+    to_add = target_length - n
+    return lst + [pad_token] * to_add
 
-    # Build dictionary for actions
-    action_files = glob.glob(f"{args.demo}/actions/*.npy")
-    action_dict = {}
-    for file in action_files:
-        key = os.path.splitext(os.path.basename(file))[0]
-        action_dict[key] = np.load(file)
+def load_asot_data(args):
+    filenames = []
+    for filename in os.listdir(args.data_dir + f'/{args.feature_name}'):
+        true_name = filename.split('.')[0]
+        filenames.append(true_name)
 
-    # Build dictionary for ground truths
-    ground_truth_files = glob.glob(f"{args.demo}/groundTruth/*")
-    ground_truth_dict = {}
-    for file in ground_truth_files:
-        # If the ground truth files don't have an extension, key will be the full name.
-        key = os.path.splitext(os.path.basename(file))[0]
-        with open(file) as f:
-            ground_truth_dict[key] = f.read().splitlines()
 
-    # Use the keys from state_dict (or the intersection of all keys, if needed)
-    keys = list(state_dict.keys())
-    keys.sort()  # Optional: sort keys to have a predictable order
+    data_files = []
+    for filename in filenames:
+        state_name = args.data_dir + f'/{args.feature_name}/' + filename + '.npy'
+        action_name = args.data_dir + '/actions/' + filename + '.npy'
+        ground_truth_name = args.data_dir + '/groundTruth/' + filename
 
-    states = [state_dict[k] for k in keys]
-    actions = [action_dict[k] for k in keys]
-    ground_truths = [ground_truth_dict[k] for k in keys]
+        data_files.append((state_name, action_name, ground_truth_name))
 
-    # Load the mapping file and create a dictionary to map ground truth strings to numbers.
-    mapping_file = os.path.join(args.demo, "mapping", "mapping.txt")
-    mapping_dict = {}
-    with open(mapping_file, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                parts = line.split()
-                if len(parts) >= 2:
-                    # parts[0] is the number and parts[1] is the ground truth label
-                    mapping_dict[parts[1]] = int(parts[0])
+    max_length = 0
+    for file in data_files:
+        #Load the npy file
+        data = np.load(file[0])
+        
+        shape = data.shape #Length x feature_size 
+        if shape[0] > max_length:
+            max_length = shape[0]
 
-    # Convert each ground truth list from strings to numbers using the mapping.
-    for i in range(len(ground_truths)):
-        ground_truths[i] = [mapping_dict[label] for label in ground_truths[i]]
+    all_states = []
+    all_actions = []
+    all_ground_truth = []
+    for file in data_files:
+        state = np.load(file[0])
+        action = np.load(file[1])
+        with open(file[2], 'r') as f:
+            ground_truth = f.read().splitlines()
+        
+        state = np.pad(state, ((0, max_length - state.shape[0]), (0, 0)), mode='edge')
+        action = np.pad(action, (0, max_length - action.shape[0]), mode='edge')
+        ground_truth = pad_with_edge(ground_truth, max_length)
 
-    del state_files, action_files, ground_truth_files
+        assert state.shape[0] == max_length
+        assert action.shape[0] == max_length
+        assert len(ground_truth) == max_length
 
-    assert len(states) == len(actions) == len(ground_truths),\
-        "Error: Mismatch in the number of state, action, and ground truth files."
+        all_states.append(state)
+        all_actions.append(action)
+        all_ground_truth.append(ground_truth)
 
-    with open(f"{args.demo}/config.json") as f:
-        config = json.load(f)
-    max_episode_length = config['max_episode_length']
 
-    # Pad the states, actions, and ground truths to the max episode length
-    for i in range(len(states)):
-        state_len = len(states[i])
-        action_len = len(actions[i])
-        truth_len = len(ground_truths[i])
 
-        if state_len < max_episode_length:
-            states[i] = np.pad(states[i], ((0, max_episode_length - state_len), (0, 0)), mode='edge')
-        if action_len < max_episode_length:
-            actions[i] = np.pad(actions[i], (0, max_episode_length - action_len), mode='edge')
-        if truth_len < max_episode_length:
-            # For ground truths, pad with the last number
-            ground_truths[i].extend([ground_truths[i][-1]] * (max_episode_length - truth_len))
+    all_states = np.array(all_states).astype(np.float32)
+    all_actions = np.array(all_actions).astype(np.int64)
 
-    states = np.array(states, dtype=np.float32)  # Change to float32
-    actions = np.array(actions)
 
-    train_test_split = np.random.permutation(len(states))
+    del data_files, filenames
 
-    train_states   = states[train_test_split[int(len(states)*args.test_size):]]
-    train_actions  = actions[train_test_split[int(len(states)*args.test_size):]]
+    return all_states, all_actions, all_ground_truth
 
-    test_states  = states[train_test_split[:int(len(states)*args.test_size)]]
-    test_actions = actions[train_test_split[:int(len(states)*args.test_size)]]
 
-    test_lengths = torch.tensor([len(state) for state in test_states], dtype=torch.long).to(device)
-    test_inputs = (
-        torch.tensor(test_states, dtype=torch.float32).to(device),
-        torch.tensor(test_actions, dtype=torch.long).to(device)
-    )
+def get_data(device, args):
+    data_states, data_actions, data_truth = load_asot_data(args)
 
-    all_data_states = torch.tensor(states, dtype=torch.float32).to(device)
-    all_action_states = torch.tensor(actions, dtype=torch.long).to(device)
+
+    state_dim = data_states.shape[2]
+    action_dim = data_actions.max() + 1
+    max_steps = data_states.shape[1]
+
+    np.random.seed(args.random_seed) 
+    train_test_split = np.random.permutation(len(data_states))
+    train_test_split_ratio = 0.05
+
+    train_states = data_states[train_test_split[int(len(data_states)*train_test_split_ratio):]]
+    train_actions = data_actions[train_test_split[int(len(data_states)*train_test_split_ratio):]]
+
+    test_states = data_states[train_test_split[:int(len(data_states)*train_test_split_ratio)]]
+    test_actions = data_actions[train_test_split[:int(len(data_states)*train_test_split_ratio)]]
+
+    test_lengths = torch.tensor([max_steps] * len(test_states)).to(device)
+    test_inputs = (torch.tensor(test_states).to(device), torch.tensor(test_actions).to(device))
+
+    perm = utils.PermManager(len(train_states), args.batch_size)
 
     return {
-        'train': (train_states, train_actions),
-        'test': (test_inputs, test_lengths),
-        'all': (all_data_states, all_action_states, ground_truths)
+        'train_states': train_states,
+        'train_actions': train_actions,
+        'test_states': test_states,
+        'test_actions': test_actions,
+        'test_inputs': test_inputs,
+        'test_lengths': test_lengths,
+        'perm': perm,
+        'state_dim': state_dim,
+        'action_dim': action_dim,
+        'max_steps': max_steps,
+        'all_states': data_states,
+        'all_actions': data_actions,
+        'all_ground_truth': data_truth
     }

@@ -20,7 +20,7 @@ class CompILE(nn.Module):
             Gumbel softmax latents ('concrete').
     """
     def __init__(self, state_dim, action_dim, hidden_dim, latent_dim, max_num_segments,
-                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cuda'):
+                 temp_b=1., temp_z=1., latent_dist='gaussian', device='cpu'):
         super(CompILE, self).__init__()
 
         self.state_dim = state_dim
@@ -222,21 +222,17 @@ class CompILE(nn.Module):
         return np.argmax(policy), termination
 
     def evaluate_score(self, states, actions):
-        policies_probs = []
         with torch.no_grad():
             o_vector = torch.zeros(1, self.latent_dim).to(self.device).float()
             o_vector[0, 0] = 1
             policy = self.decode(o_vector, states)
             policy = policy.view(-1, policy.shape[-1]).cpu().numpy()
             max_probs = np.take_along_axis(policy, actions.view((-1, 1)).cpu().numpy(), 1).reshape(-1)
-            policies_probs.append(max_probs)
             for option in range(1, self.latent_dim):
                 o_vector = torch.zeros(1, self.latent_dim).to(self.device).float()
                 o_vector[0, option] = 1
                 policy = self.decode(o_vector, states)
                 policy = policy.view(-1, policy.shape[-1]).cpu().numpy()
                 prob = np.take_along_axis(policy, actions.view((-1, 1)).cpu().numpy(), 1).reshape(-1)
-                policies_probs.append(prob)
                 max_probs = np.maximum(max_probs, prob)
-            policies_probs = np.array(policies_probs)
-        return np.mean(max_probs), policies_probs
+        return np.mean(max_probs)
